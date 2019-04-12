@@ -381,9 +381,6 @@ def _get_group_lasso(model):
     _lasso_in_ch         = torch.cat(lasso_in_ch).cuda()
     _lasso_out_ch        = torch.cat(lasso_out_ch).cuda()
 
-    #lasso_penalty_in_ch  = _lasso_in_ch.add(1.0e-8).sqrt().sum()
-    #lasso_penalty_out_ch = _lasso_out_ch.add(1.0e-8).sqrt().sum()
-
     lasso_penalty_in_ch  = _lasso_in_ch.add(1.0e-8).sqrt()
     lasso_penalty_out_ch = _lasso_out_ch.add(1.0e-8).sqrt()
 

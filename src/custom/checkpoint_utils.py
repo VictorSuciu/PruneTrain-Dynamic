@@ -3,11 +3,14 @@ import torch
 from torch.nn.parameter import Parameter
 import torch.optim as optim
 import numpy as np
+import torch.nn as nn
 
 import heapq
 
 sys.path.append('..')
-import models.cifar as models
+#import models.cifar as models
+import models.imagenet as models
+#from models.imagenet import models
 from .resnet_stages import *
 from .rm_layers import getRmLayers
 
@@ -19,8 +22,10 @@ MFLOPS = 1000000/2
 
 class Checkpoint():
   def __init__(self, arch, model_path, num_classes, depth=None):
+    #print("{}, {}".format(models.__dict__, arch))
     self.arch = arch
-    self.model = models.__dict__[arch](num_classes=num_classes)
+    #self.model = models.__dict__[arch](num_classes=num_classes)
+    self.model = models.__dict__[arch]()
     self.model = torch.nn.DataParallel(self.model)
     checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
     self.model.load_state_dict(checkpoint['state_dict'])
@@ -86,8 +91,10 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
   #fmap = cifar_feature_size[arch]
   fmap = imagenet_feature_size[arch]
 
-  if file_name != None:
-    out_file = open(file_name, 'w')
+#  if file_name != None:
+#    out_file = open(file_name, 'w')
+
+  tot_weights = 0
 
   for name, param in model.named_parameters():
     if ('weight' in name) and ('conv' in name or 'fc' in name):
@@ -128,23 +135,25 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
       weights = param.data.numpy()
       weight_density = float(weights[weights >= threshold].size) / weights.size
 
+      tot_weights += weights[weights >= threshold].size
+
       sparse_val_map[conv_id] = np.array(layer)
       sparse_bi_map[conv_id] = channel_map
 
       rows = channel_map.max(axis=1) # in_channels
       cols = channel_map.max(axis=0) # out_channels
 
-      if 'conv' in name or 'fc' in name:
-        if file_name != None:
-          out_file.write("\n{}:{}, ".format(name, 'i_ch'))
-          for row in rows:
-            out_file.write("{},".format(row))
-          out_file.write("\n{}:{}, ".format(name, 'o_ch'))
-          for col in cols:
-            out_file.write("{},".format(col))
-        else:
-          print ("{}:{}, {}".format(name, 'i_ch', rows))
-          print ("{}:{}, {}".format(name, 'o_ch', cols))
+#      if 'conv' in name or 'fc' in name:
+#        if file_name != None:
+#          out_file.write("\n{}:{}, ".format(name, 'i_ch'))
+#          for row in rows:
+#            out_file.write("{},".format(row))
+#          out_file.write("\n{}:{}, ".format(name, 'o_ch'))
+#          for col in cols:
+#            out_file.write("{},".format(col))
+#        else:
+#          print ("{}:{}, {}".format(name, 'i_ch', rows))
+#          print ("{}:{}, {}".format(name, 'o_ch', cols))
 
       num_dense_out_ch = float(np.count_nonzero(cols))
       num_dense_in_ch = float(np.count_nonzero(rows))
@@ -154,6 +163,7 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
 
       conv_struct_density[conv_id] = {'in_ch':in_density, 'out_ch':out_density}
       conv_rand_density[conv_id] = weight_density
+      print("{}: {}".format(name, weight_density))
 
       model_size += num_dense_out_ch * num_dense_in_ch * filter_size # Add filters
       model_size += num_dense_out_ch  # Add bias
@@ -169,6 +179,8 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
       conv_id += 1
       acc_inf_cost += inf_cost
 
+  print("tot_weights:{}".format(tot_weights))
+
   return sparse_bi_map, \
          sparse_val_map, \
          conv_id, \
@@ -183,7 +195,7 @@ Make only the (conv, FC) layer parameters sparse
 - Match other layers' parameters when reconfiguring network
 - Only work for the flattened networks
 """
-def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False):
+def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False, reconf=False):
 
   print ("[INFO] Force the sparse filters to zero...")
   dense_chs, chs_temp, idx = {}, {}, 0
@@ -193,47 +205,58 @@ def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False
     if (('conv' in name) or ('fc' in name)) and ('weight' in name):
 
       with torch.no_grad():
-        if 'cifar' in dataset:
-          param = torch.where(param < threshold, torch.tensor(0.).cuda(), param)
-        else:
-          param = torch.where(param < threshold, torch.tensor(0.).cuda().half(), param)
+        param = torch.where(param < threshold, torch.tensor(0.).cuda(), param)
 
       dense_in_chs, dense_out_chs = [], []
       if param.dim() == 4:
+        if 'conv' in name:
+          conv_dw = int(name.split('.')[1].split('conv')[1]) %2 == 0
+        else:
+          conv_dw = False
         # Forcing sparse input channels to zero
-        for c in range(dims[1]):
-          #data = param[:,c,:,:].abs().max()
-          if (threshold_type == 'max') and (param[:,c,:,:].abs().max() > 0):
-            dense_in_chs.append(c)
-          elif (threshold_type == 'mean') and (param[:,c,:,:].abs().max() > 0):
-            dense_in_chs.append(c)
+        if ('mobilenet' not in arch) or ('mobilenet' in arch and not conv_dw):
+          for c in range(dims[1]):
+            if param[:,c,:,:].abs().max() > 0:
+              dense_in_chs.append(c)
 
         # Forcing sparse output channels to zero
         for c in range(dims[0]):
-          if (threshold_type == 'max') and (param[c,:,:,:].abs().max() > 0):
-            dense_out_chs.append(c)
-          elif (threshold_type == 'mean') and (param[c,:,:,:].abs().max() > 0):
+          if param[c,:,:,:].abs().max() > 0:
             dense_out_chs.append(c)
 
       # Forcing input channels of FC layer to zero
       elif param.dim() == 2:
+        # Last FC layers (fc, fc3): Remove only the input neurons
         for c in range(dims[1]):
-          if threshold_type == 'max':
-            data = param[:,c].abs().max()
-          elif threshold_type == 'mean':
-            data = param[:,c].abs().mean()
-
-          if data > 0:
+          if param[:,c].abs().max() > 0:
             dense_in_chs.append(c)
-
-        # FC's output channels (class probabilities) are all dense
-        dense_out_chs = [c for c in range(dims[0])]
+        # FC layer in the middle remove their output neurons
+        if any(i for i in ['fc1', 'fc2'] if i in name):
+          for c in range(dims[0]):
+            if param[c,:].abs().max() > 0:
+              dense_out_chs.append(c)
+        else:
+          # [fc, fc3] output channels (class probabilities) are all dense
+          dense_out_chs = [c for c in range(dims[0])]
       
       chs_temp[idx] = {'name':name, 'in_chs':dense_in_chs, 'out_chs':dense_out_chs}
       idx += 1
       dense_chs[name] = {'in_chs':dense_in_chs, 'out_chs':dense_out_chs, 'idx':idx}
 
-
+      # print the inter-layer tensor dim [out_ch, in_ch, feature_h, feature_w]
+      if not reconf:
+          if 'fc' in name:
+              print("[{}]: [{}, {}]".format(name, 
+                                            len(dense_chs[name]['out_chs']),
+                                            len(dense_chs[name]['in_chs']),
+                                            ))
+          else:
+              print("[{}]: [{}, {}, {}, {}]".format(name, 
+                                                    len(dense_chs[name]['out_chs']),
+                                                    len(dense_chs[name]['in_chs']),
+                                                    param.shape[2],
+                                                    param.shape[3],
+                                                    ))
   """
   Inter-layer channel is_gating
   - Union: Maintain all dense channels on the shared nodes (No indexing)
@@ -302,16 +325,56 @@ def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False
 
       return dense_chs, None
 
+  # Non-residual networks
+  elif 'mobilenet' in arch:
+    for idx in sorted(chs_temp):
+      # From conv2 layer
+      if idx != 0:
+        # Depth-wise convolution layer: Matintain the union of adjacent layers' dense channels
+        if ((idx+1) %2 == 0) and ('fc' not in chs_temp[idx]['name']):
+          edge = list(set().union(chs_temp[idx-1]['out_chs'], chs_temp[idx+1]['in_chs']))
+          dense_chs[ chs_temp[idx-1]['name'] ]['out_chs'] = edge
+          dense_chs[ chs_temp[idx]['name'] ]['out_chs'] = edge
+          dense_chs[ chs_temp[idx+1]['name'] ]['in_chs'] = edge
+
+          ## Search the target DW-convolution layer and change group#
+          conv_idx = 0
+          for layer in model.modules():
+            if isinstance(layer, nn.Conv2d):
+              # Found the target conv-layer
+              if idx == conv_idx:
+                layer.groups = len(edge)
+                break
+              else:
+                conv_idx +=1
+
+        elif 'fc' in chs_temp[idx]['name']:
+          edge = list(set().union(chs_temp[idx]['in_chs'], chs_temp[idx-1]['out_chs']))
+          dense_chs[ chs_temp[idx]['name'] ]['in_chs'] = edge
+          dense_chs[ chs_temp[idx-1]['name'] ]['out_chs'] = edge
+
+    return dense_chs, None
+
+  # Non-residual networks
   else:
     for idx in sorted(chs_temp):
       if idx != 0:
-        if is_gating:
-          edge = [x for x in chs_temp[idx-1]['out_chs'] if x in chs_temp[idx]['in_chs']]
+        # Dense input channels <= previous layers's output channel granularity
+        if 'fc1' in chs_temp[idx]['name']: 
+          feature_size = 7*7
+          edge = []
+          for prev_dense_ch in dense_chs[ chs_temp[idx-1]['name'] ]['out_chs']:
+            for i in range(feature_size):
+              edge.append(prev_dense_ch * feature_size + i)
+          dense_chs[ chs_temp[idx]['name'] ]['in_chs'] = edge
         else:
-          edge = list(set().union(chs_temp[idx-1]['out_chs'], chs_temp[idx]['in_chs']))
-
-        dense_chs[ chs_temp[idx-1]['name'] ]['out_chs'] = edge
-        dense_chs[ chs_temp[idx]['name'] ]['in_chs'] = edge
+          if is_gating:
+            edge = [x for x in chs_temp[idx-1]['out_chs'] if x in chs_temp[idx]['in_chs']]
+          else:
+            edge = list(set().union(chs_temp[idx-1]['out_chs'], chs_temp[idx]['in_chs']))
+  
+          dense_chs[ chs_temp[idx-1]['name'] ]['out_chs'] = edge
+          dense_chs[ chs_temp[idx]['name'] ]['in_chs'] = edge
     return dense_chs, None
 
 
@@ -327,9 +390,7 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
 
   # Sanity check
   #for layer in dense_chs:
-  #  print("======>> {}".format(layer))
-  #  print("===> in_ch: {}".format(len(dense_chs[layer]['in_chs'])))
-  #  print("===> out_ch: {}".format(len(dense_chs[layer]['out_chs'])))
+  #  print("==> [{}]: {},{}".format(layer, len(dense_chs[layer]['in_chs']), len(dense_chs[layer]['out_chs'])))
 
   # List of layers to remove
   rm_list = []
@@ -346,11 +407,6 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
     # Change parameters of neural computing layers (Conv, FC) 
     if (('conv' in name) or ('fc' in name)) and ('weight' in name):
 
-#      dims = list(param.shape)
-#      dense_in_ch_idxs = dense_chs[name]['in_chs']
-#      dense_out_ch_idxs = dense_chs[name]['out_chs']
-#      num_in_ch, num_out_ch = len(dense_in_ch_idxs), len(dense_out_ch_idxs)
-
       if 'conv' in name:
         conv_dw = int(name.split('.')[1].split('conv')[1]) %2 == 0
       else:
@@ -358,7 +414,7 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
 
       dims = list(param.shape)
 
-      if arch == 'mobilenet' and conv_dw:
+      if 'mobilenet' in arch and conv_dw:
         dense_in_ch_idxs = [0]
       else:
         dense_in_ch_idxs = dense_chs[name]['in_chs']
@@ -374,12 +430,8 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
       else:
         # Generate a new dense tensor and replace (Convolution layer)
         if len(dims) == 4:
-          if 'cifar' in dataset:
-            new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda()
-            new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda()
-          else:
-            new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda().half()
-            new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda().half()
+          new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda()
+          new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch, dims[2], dims[3])).cuda()
 
           for in_idx, in_ch in enumerate(sorted(dense_in_ch_idxs)):
             for out_idx, out_ch in enumerate(sorted(dense_out_ch_idxs)):
@@ -389,17 +441,20 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
 
         # Generate a new dense tensor and replace (FC layer)
         elif len(dims) == 2:
-          if 'cifar' in dataset:
-            new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda()
-            new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda()
-          else:
-            new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda().half()
-            new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda().half()
+          new_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda()
+          new_mom_param = Parameter(torch.Tensor(num_out_ch, num_in_ch)).cuda()
 
-          for in_idx, in_ch in enumerate(sorted(dense_in_ch_idxs)):
-            with torch.no_grad():
-              new_param[:,in_idx] = param[:,in_ch]
-              new_mom_param[:,in_idx] = mom_param[:,in_ch]
+          if ('fc1' in name) or ('fc2' in name):
+            for in_idx, in_ch in enumerate(sorted(dense_in_ch_idxs)):
+              for out_idx, out_ch in enumerate(sorted(dense_out_ch_idxs)):
+                with torch.no_grad():
+                  new_param[out_idx,in_idx] = param[out_ch,in_ch]
+                  new_mom_param[out_idx,in_idx] = mom_param[out_ch,in_ch]
+          else:
+            for in_idx, in_ch in enumerate(sorted(dense_in_ch_idxs)):
+              with torch.no_grad():
+                new_param[:,in_idx] = param[:,in_ch]
+                new_mom_param[:,in_idx] = mom_param[:,in_ch]
         else:
           assert True, "Wrong tensor dimension: {} at layer {}".format(dims, name)
         
@@ -414,12 +469,8 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
       dense_out_ch_idxs = dense_chs[w_name]['out_chs']
       num_out_ch = len(dense_out_ch_idxs)
 
-      if 'cifar' in dataset:
-        new_param = Parameter(torch.Tensor(num_out_ch)).cuda()
-        new_mom_param = Parameter(torch.Tensor(num_out_ch)).cuda()
-      else:
-        new_param = Parameter(torch.Tensor(num_out_ch)).cuda().half()
-        new_mom_param = Parameter(torch.Tensor(num_out_ch)).cuda().half()
+      new_param = Parameter(torch.Tensor(num_out_ch)).cuda()
+      new_mom_param = Parameter(torch.Tensor(num_out_ch)).cuda()
 
       for out_idx, out_ch in enumerate(sorted(dense_out_ch_idxs)):
         with torch.no_grad():
@@ -437,10 +488,7 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
       w_name = name.replace('bn', 'conv').split('running')[0]+'weight'
       dense_out_ch_idxs = dense_chs[w_name]['out_chs']
       num_out_ch = len(dense_out_ch_idxs)
-      if 'cifar' in dataset:
-        new_buf = Parameter(torch.Tensor(num_out_ch)).cuda()
-      else:
-        new_buf = Parameter(torch.Tensor(num_out_ch)).cuda().half()
+      new_buf = Parameter(torch.Tensor(num_out_ch)).cuda()
 
       for out_idx, out_ch in enumerate(sorted(dense_out_ch_idxs)):
         with torch.no_grad():

@@ -21,10 +21,11 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import models.imagenet as customized_models
 
-from utils import Bar, Logger, AverageMeter, accuracy, mkdir_p, savefig
-from custom.checkpoint_utils_fp32 import _makeSparse
-from custom.checkpoint_utils_fp32 import _genDenseModel
+from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
+from custom.checkpoint_utils import _makeSparse
+from custom.checkpoint_utils import _genDenseModel
 from custom_arch import *
+from group_lasso_regs import _get_group_lasso_global, _get_group_lasso_group
 import numpy as np
 import math as mt
 
@@ -106,6 +107,9 @@ parser.add_argument('--threshold', default=0.0001, type=float,
                     help='Threshold to force weight to zero')
 parser.add_argument('--en_group_lasso', default=False, action='store_true',
                     help='Set the group-lasso coefficient')
+parser.add_argument('--global_group_lasso', default=True, action='store_true',
+                    help='True: use a global group lasso coefficient, '
+                    'False: use sqrt(num_params) as a coefficient for each group')
 parser.add_argument('--var_group_lasso_coeff', default=0.1, type=float,
                     help='Ratio = group-lasso / (group-lasso + loss)')
 parser.add_argument('--grp_lasso_coeff', default=0.0005, type=float,
@@ -328,55 +332,9 @@ def main():
                     filename='checkpoint'+str(epoch)+'.tar')
 
     logger.close()
-    #logger.plot()
-    #savefig(os.path.join(args.checkpoint, 'log.eps'))
 
     print('Best acc:')
     print(best_acc)
-
-
-def _get_group_lasso(model):
-    lasso_in_ch = []
-    lasso_out_ch = []
-
-    for name, param in model.named_parameters():
-        # Lasso added to only the neuronal layers
-        if ('weight' in name) and any([i for i in ['conv', 'fc'] if i in name]):
-            if param.dim() == 4:
-                conv_dw = int(name.split('.')[1].split('conv')[1]) %2 == 0
-                #add_in_lasso = ('mobilenet' not in args.arch) or ('mobilenet' in args.arch and not conv_dw)
-                add_lasso = ('mobilenet' not in args.arch) or ('mobilenet' in args.arch and not conv_dw)
-
-#                if ('conv1.' not in name) and add_in_lasso:
-#                    _in = param.pow(2).sum(dim=[0,2,3])
-#                    lasso_in_ch.append( _in )
-#
-#                _out = param.pow(2).sum(dim=[1,2,3])
-#                lasso_out_ch.append( _out )
-
-                # Exclude depth-wise convolution layers from regularization
-                if add_lasso:
-                    if 'conv1.' not in name:
-                        _in = param.pow(2).sum(dim=[0,2,3])
-                        lasso_in_ch.append( _in )
-
-                    _out = param.pow(2).sum(dim=[1,2,3])
-                    lasso_out_ch.append( _out )
-
-            elif param.dim() == 2:
-                if ('fc1' in name) or ('fc2' in name):
-                    lasso_out_ch.append( param.pow(2).sum(dim=[1]) )
-                lasso_in_ch.append( param.pow(2).sum(dim=[0]) )
-
-    _lasso_in_ch         = torch.cat(lasso_in_ch).cuda()
-    _lasso_out_ch        = torch.cat(lasso_out_ch).cuda()
-
-    lasso_penalty_in_ch  = _lasso_in_ch.add(1.0e-8).sqrt().sum()
-    lasso_penalty_out_ch = _lasso_out_ch.add(1.0e-8).sqrt().sum()
-
-    lasso_penalty        = lasso_penalty_in_ch + lasso_penalty_out_ch
-    return lasso_penalty
-
 
 def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
     # switch to train mode
@@ -410,7 +368,9 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
         lasso_time_start = time.time()
 
         if args.en_group_lasso:
-            lasso_penalty = _get_group_lasso(model)
+            if args.global_group_lasso:
+                lasso_penalty = _get_group_lasso(model, args.arch)
+            else:
 
             # Auto-tune the group-lasso coefficient @first training iteration
             coeff_dir = os.path.join(args.coeff_container, 'imagenet', args.arch)
