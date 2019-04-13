@@ -1,5 +1,4 @@
-"""
-Flattened AlexNet for CIFAR10/100
+""" Flattened AlexNet for CIFAR10/100
 """
 
 import torch.nn as nn

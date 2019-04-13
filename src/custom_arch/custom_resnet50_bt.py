@@ -28,11 +28,7 @@ arch[152] = {'name':'avgpool', 'num':8}
 arch[153] = {'name':'relu'}
 arch[154] = {'name':'fc', 'out_chs':'num_classes'}
 
-"""
-Generate dense ResNet50BT architecture
-- Only input/output channel number change
-"""
-def _genDenseArchResNet50BT(model, out_f_dir, arch_name, dense_chs, chs_map, is_gating=False):
+def _genDenseArchResNet50BT(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map, is_gating=False):
   # File heading
   ctx = 'import torch.nn as nn\n'
   ctx += 'import torch\n'
@@ -100,11 +96,11 @@ def _genDenseArchResNet50BT(model, out_f_dir, arch_name, dense_chs, chs_map, is_
   ctx += '\tmodel = ResNet50BT(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join('/workspace/models/pytorch-classification/models/cifar', 'resnet50_bt_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'resnet50_bt_flat.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)

@@ -1,29 +1,21 @@
+""" All unique layers of VGG8 with batch norm layers for CIFAR10/100
+"""
+
 import os
 from .arch_utils import layerUtil
 
-""" 
-All unique layers of VGG8_BN for CIFAR10/100
-"""
 arch = {}
-arch[0] = {'name':'conv1' , 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[1] = {'name':'bn1'}
-arch[4] = {'name':'conv2' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[5] = {'name':'bn2'}
-arch[8] = {'name':'conv3' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[9] = {'name':'bn3'}
-arch[12] = {'name':'conv4' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[13] = {'name':'bn4'}
-arch[16] = {'name':'conv5' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[17] = {'name':'bn5'}
-arch[26] = {'name':'pool', 'kernel_size':2, 'stride':2}
-arch[27] = {'name':'relu'}
-arch[28] = {'name':'fc', 'out_chs':'num_classes'}
+for i in range(1, 6):
+    conv_idx = (i-1)*2
+    bn_idx = conv_idx +1
+    arch[conv_idx] = {'name':'conv'+str(i) , 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
+    arch[bn_idx] = {'name':'bn'+str(i)}
 
-"""
-Generate dense VGG8_BN architecture
-- Only input/output channel number change
-"""
-def _genDenseArchVGG8BN(model, out_f_dir, dense_chs, chs_map=None):
+arch[10] = {'name':'pool', 'kernel_size':2, 'stride':2}
+arch[11] = {'name':'relu'}
+arch[12] = {'name':'fc', 'out_chs':'num_classes'}
+
+def _genDenseArchVGG8BN(model, out_f_dir1, out_f_dir2, dense_chs, chs_map=None):
   print ("[INFO] Generating a new dense architecture...")
 
   # File heading
@@ -74,8 +66,10 @@ def _genDenseArchVGG8BN(model, out_f_dir, dense_chs, chs_map=None):
   ctx += '\tmodel = VGG8(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
-  f_out = open(os.path.join(out_f_dir, 'vgg8_bn_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'vgg8_bn_flat.py'),'w')
+  f_out1.write(ctx)
+  f_out = open(os.path.join(out_f_dir2, 'vgg8_bn_flat.py'),'w')
   f_out.write(ctx)

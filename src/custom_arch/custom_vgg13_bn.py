@@ -1,45 +1,22 @@
+"""  All unique layers of VGG13 with batch norm layers for CIFAR10/100
+"""
+
 import os
 from .arch_utils import layerUtil
 
-""" 
-All unique layers of VGG13_BN for CIFAR10/100
-"""
 arch = {}
-arch[0] = {'name':'conv1' , 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[1] = {'name':'bn1'}
-arch[2] = {'name':'conv2' , 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[3] = {'name':'bn2'}
+for i in range(1, 11):
+    conv_idx = (i-1)*2
+    bn_idx = conv_idx +1
+    arch[conv_idx] = {'name':'conv'+str(i) , 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
+    arch[bn_idx] = {'name':'bn'+str(i)}
 
-arch[4] = {'name':'conv3' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[5] = {'name':'bn3'}
-arch[6] = {'name':'conv4' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[7] = {'name':'bn4'}
-
-arch[8] = {'name':'conv5' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[9] = {'name':'bn5'}
-arch[10] = {'name':'conv6' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[11] = {'name':'bn6'}
-
-arch[12] = {'name':'conv7' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[13] = {'name':'bn7'}
-arch[14] = {'name':'conv8' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[15] = {'name':'bn8'}
-
-arch[16] = {'name':'conv9' ,  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[17] = {'name':'bn9'}
-arch[18] = {'name':'conv10',  'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-arch[19] = {'name':'bn10'}
-
-arch[26] = {'name':'pool', 'kernel_size':2, 'stride':2}
-arch[27] = {'name':'relu'}
-arch[28] = {'name':'fc', 'out_chs':'num_classes'}
+arch[20] = {'name':'pool', 'kernel_size':2, 'stride':2}
+arch[21] = {'name':'relu'}
+arch[22] = {'name':'fc', 'out_chs':'num_classes'}
 
 
-"""
-Generate dense VGG13_BN architecture
-- Only input/output channel number change
-"""
-def _genDenseArchVGG13BN(model, out_f_dir, arch_name, dense_chs, chs_map=None):
+def _genDenseArchVGG13BN(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
   print ("[INFO] Generating a new dense architecture...")
 
   # File heading
@@ -105,12 +82,12 @@ def _genDenseArchVGG13BN(model, out_f_dir, arch_name, dense_chs, chs_map=None):
   ctx += '\tmodel = VGG13(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
-  f_out1 = open(os.path.join('/workspace/models/pytorch-classification/models/cifar', 'vgg13_bn_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'vgg13_bn_flat.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)
 
 

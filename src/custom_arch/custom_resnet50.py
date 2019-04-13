@@ -1,9 +1,9 @@
+""" All unique layers of ResNet50 for IMAGENET
+"""
+
 import os
 from .arch_utils import layerUtil
 
-""" 
-All unique layers of ResNet50 for IMAGENET
-"""
 k7_s2_p3 = [1]
 k3_s2_p1 = [13, 26, 45]
 k1_s2_p0 = [15, 28, 47]
@@ -31,11 +31,7 @@ arch[107] = {'name':'maxpool', 'kernel_size':3, 'stride':2, 'padding':1}
 arch[108] = {'name':'relu'}
 arch[109] = {'name':'fc', 'out_chs':'num_classes'}
 
-"""
-Generate dense ResNet50 architecture
-- Only input/output channel number change
-"""
-def _genDenseArchResNet50(model, out_f_dir, arch_name, dense_chs, chs_map, is_gating=False):
+def _genDenseArchResNet50(model, out_f_dir1, out_f_dir1, arch_name, dense_chs, chs_map, is_gating=False):
   # File heading
   ctx = 'import torch.nn as nn\n'
   ctx += 'import torch\n'
@@ -99,11 +95,11 @@ def _genDenseArchResNet50(model, out_f_dir, arch_name, dense_chs, chs_map, is_ga
   ctx += '\tmodel = ResNet50(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join('/work/03883/erhoo/projects/spar/sparse_train_pytorch/src/models/imagenet', 'resnet50_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'resnet50_flat.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)

@@ -1,4 +1,7 @@
-#!/home/sklym/anaconda2/bin/python
+""" A script to calculate trainig and inference cost from a network model structure
+"""
+
+
 import os
 import glob
 import argparse
@@ -28,25 +31,17 @@ imgnet = 1281167. / mini_batch
 iters_per_epoch = imgnet
 bn = True
 
-# Remove base 
-#inf_list = glob.glob(os.path.join(args.in_dir, '*.log'))
-#for i in inf_list:
-#    if 'base' in i:
-#        inf_list.remove(i)
-#        break
-
 inf_list = glob.glob(args.in_dir)
-
 fmap = imagenet_feature_size[args.arch]
-
 log_tot = {'coeff':[], 'train_cost':[], 'bn_cost':[], 'best_acc':[], 'inf_cost':[]}
 
-"""
-coeff - epoch - comp_cost (training cost)
-              - mem_cost
-              - footprint (training context)
-      - parameter_size
-      - inference_compute_cost
+""" Calcuate below metrics from the network architecture
+# 1. training cost
+# 2. inference cost
+# 3. memory accesses in BN layers
+# 4. activation size
+# 5. model size
+# 6. output channels
 """
 def getTrainingCost(arch, base=False, verbose=True):
 

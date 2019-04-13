@@ -1,9 +1,8 @@
+""" All unique layers of ResNet32 for CIFAR10/100
+"""
 import os
 from .arch_utils import layerUtil
 
-""" 
-All unique layers of ResNet32 for CIFAR10/100
-"""
 k3_s2_p1 = [12, 23]
 k1_s2_p0 = [14, 25]
 
@@ -24,87 +23,7 @@ arch[66] = {'name':'avgpool', 'num':8}
 arch[67] = {'name':'relu'}
 arch[68] = {'name':'fc', 'out_chs':'num_classes'}
 
-
-#arch = {}
-#arch[0] = {'name':'conv1', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[1] = {'name':'bn1'}
-#
-#arch[2] = {'name':'conv2', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[3] = {'name':'bn2'}
-#arch[4] = {'name':'conv3', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[5] = {'name':'bn3'}
-#arch[6] = {'name':'conv4', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[7] = {'name':'bn4'}
-#arch[8] = {'name':'conv5', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[9] = {'name':'bn5'}
-#arch[10] = {'name':'conv6', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[11] = {'name':'bn6'}
-#arch[12] = {'name':'conv7', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[13] = {'name':'bn7'}
-#arch[14] = {'name':'conv8', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[15] = {'name':'bn8'}
-#arch[16] = {'name':'conv9', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[17] = {'name':'bn9'}
-#arch[18] = {'name':'conv10', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[19] = {'name':'bn10'}
-#arch[20] = {'name':'conv11', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[21] = {'name':'bn11'}
-#
-#arch[22] = {'name':'conv12', 'kernel_size':3, 'stride':2, 'padding':1, 'bias':False}
-#arch[23] = {'name':'bn12'}
-#arch[24] = {'name':'conv13', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[25] = {'name':'bn13'}
-#arch[26] = {'name':'conv14', 'kernel_size':1, 'stride':2, 'padding':0, 'bias':False}
-#arch[27] = {'name':'bn14'}
-#arch[28] = {'name':'conv15', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[29] = {'name':'bn15'}
-#arch[30] = {'name':'conv16', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[31] = {'name':'bn16'}
-#arch[32] = {'name':'conv17', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[33] = {'name':'bn17'}
-#arch[34] = {'name':'conv18', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[35] = {'name':'bn18'}
-#arch[36] = {'name':'conv19', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[37] = {'name':'bn19'}
-#arch[38] = {'name':'conv20', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[39] = {'name':'bn20'}
-#arch[40] = {'name':'conv21', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[41] = {'name':'bn21'}
-#arch[42] = {'name':'conv22', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[43] = {'name':'bn22'}
-#
-#arch[44] = {'name':'conv23', 'kernel_size':3, 'stride':2, 'padding':1, 'bias':False}
-#arch[45] = {'name':'bn23'}
-#arch[46] = {'name':'conv24', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[47] = {'name':'bn24'}
-#arch[48] = {'name':'conv25', 'kernel_size':1, 'stride':2, 'padding':0, 'bias':False}
-#arch[49] = {'name':'bn25'}
-#arch[50] = {'name':'conv26', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[51] = {'name':'bn26'}
-#arch[52] = {'name':'conv27', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[53] = {'name':'bn27'}
-#arch[54] = {'name':'conv28', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[55] = {'name':'bn28'}
-#arch[56] = {'name':'conv29', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[57] = {'name':'bn29'}
-#arch[58] = {'name':'conv30', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[59] = {'name':'bn30'}
-#arch[60] = {'name':'conv31', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[61] = {'name':'bn31'}
-#arch[62] = {'name':'conv32', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[63] = {'name':'bn32'}
-#arch[64] = {'name':'conv33', 'kernel_size':3, 'stride':1, 'padding':1, 'bias':False}
-#arch[65] = {'name':'bn33'}
-
-#arch[66] = {'name':'avgpool', 'num':8}
-#arch[67] = {'name':'relu'}
-#arch[68] = {'name':'fc', 'out_chs':'num_classes'}
-
-"""
-Generate dense ResNet32 architecture
-- Only input/output channel number change
-"""
-def _genDenseArchResNet32(model, out_f_dir, arch_name, dense_chs, chs_map, is_gating=False):
+def _genDenseArchResNet32(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map, is_gating=False):
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -164,11 +83,11 @@ def _genDenseArchResNet32(model, out_f_dir, arch_name, dense_chs, chs_map, is_ga
   ctx += '\tmodel = ResNet32(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join('/workspace/models/pytorch-classification/models/cifar', 'resnet32_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'resnet32_flat.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)

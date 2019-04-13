@@ -1,8 +1,8 @@
+""" CNN layer generator from a module defintion
+"""
+
 import os
 
-"""
-Network layer generator from the changed layer configuration
-"""
 class layerUtil():
   def __init__(self, model, dense_chs):
     self.setModel(model, dense_chs)

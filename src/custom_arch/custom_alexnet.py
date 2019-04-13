@@ -1,9 +1,9 @@
+"""  All unique layers of AlexNet for CIFAR10/100
+"""
+
 import os
 from .arch_utils import layerUtil
 
-""" 
-All unique layers of AlexNet for CIFAR10/100
-"""
 arch = {}
 arch[0] = {'name':'conv1', 'kernel_size':11, 'stride':4, 'padding':5, 'bias':True}
 arch[1] = {'name':'conv2', 'kernel_size':5,  'stride':1, 'padding':2, 'bias':True}
@@ -19,7 +19,7 @@ arch[7] = {'name':'fc', 'out_chs':'num_classes'}
 Generate dense AelxNet architecture
 - Only input/output channel number change
 """
-def _genDenseArchAlexNet(model, out_f_dir, arch_name, dense_chs, chs_map=None):
+def _genDenseArchAlexNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
   lyr_util = layerUtil(model)
 
   # File heading
@@ -65,13 +65,13 @@ def _genDenseArchAlexNet(model, out_f_dir, arch_name, dense_chs, chs_map=None):
   ctx += '\tmodel = AlexNet(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join('/workspace/models/pytorch-classification/models/cifar', 'alexnet_flat.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'alexnet_flat.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)
 
 

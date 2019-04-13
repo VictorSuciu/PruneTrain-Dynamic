@@ -1,5 +1,4 @@
-"""
-Flattened ResNet34 V1 for CIFAR with Bottleneck Blocks
+""" Flattened ResNet34 for ImageNet
 """
 
 import torch.nn as nn

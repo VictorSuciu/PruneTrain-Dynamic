@@ -1,5 +1,4 @@
-"""
-Flattened ResNet50 V1 for ImageNet
+""" Flattened ResNet50 for ImageNet
 """
 
 import torch.nn as nn

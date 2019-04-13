@@ -1,5 +1,4 @@
-"""
-Flattened ResNet32 V1 for CIFAR with Bottleneck Blocks
+""" Flattened ResNet32 for CIFAR10/100
 """
 
 import torch.nn as nn
