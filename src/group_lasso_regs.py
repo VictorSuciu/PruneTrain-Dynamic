@@ -1,6 +1,6 @@
 import torch
 
-def _get_group_lasso_global(model, arch):
+def get_group_lasso_global(model, arch):
     lasso_in_ch = []
     lasso_out_ch = []
 
@@ -35,7 +35,7 @@ def _get_group_lasso_global(model, arch):
     return lasso_penalty
 
 
-def _get_group_lasso_group(model):
+def get_group_lasso_group(model):
     lasso_in_ch = []
     lasso_out_ch = []
     lasso_in_ch_penalty = []

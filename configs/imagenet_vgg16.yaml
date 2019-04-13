@@ -1,16 +1,16 @@
 #Baseline run configuration
 base:
     arch_dir: src/models/imagenet
-    model_dir: ./output/imagenet/resnet50
+    model_dir: ./output/imagenet/vgg16
     workers: 4
     description: '0.2'
-    train_batch: 256
+    train_batch: 128
     test_batch: 40
     epochs: 90
-    learning-rate: 0.1
+    learning-rate: 0.05
     schedule: '41 61 81'
     resume: ''
-    arch: resnet50_flat
+    arch: vgg16_flat
     save_checkpoint: 10
     is_gating: False
 # PruneTrain configuration

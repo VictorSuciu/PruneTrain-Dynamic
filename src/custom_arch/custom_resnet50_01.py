@@ -31,11 +31,11 @@ arch[107] = {'name':'maxpool', 'kernel_size':3, 'stride':2, 'padding':1}
 arch[108] = {'name':'relu'}
 arch[109] = {'name':'fc', 'out_chs':'num_classes'}
 
-def _genDenseArchResNet50(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map, is_gating=False):
+def _genDenseArchResNet50_01(model, out_f_dir, arch_name, dense_chs, chs_map, is_gating=False):
   # File heading
   ctx = 'import torch.nn as nn\n'
   ctx += 'import torch\n'
-  ctx += '__all__ = [\'resnet50_flat\']\n'
+  ctx += '__all__ = [\'resnet50_flat_01\']\n'
   ctx += 'class ResNet50(nn.Module):\n'
   ctx += '\tdef __init__(self, num_classes=1000):\n'
   ctx += '\t\tsuper(ResNet50, self).__init__()\n'
@@ -54,33 +54,33 @@ def _genDenseArchResNet50(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, c
   ctx += '\t\t_x = self.maxpool(x)\n'
 
   if chs_map != None: 
-    chs_map0, chs_map1, chs_map2, chs_map3, chs_map4 = chs_map[0], chs_map[1], chs_map[2], chs_map[3], chs_map[4]
+    chs_map0, chs_map1, chs_map2, chs_map3 = chs_map[0], chs_map[1], chs_map[2], chs_map[3]
   else:               
-    chs_map0, chs_map1, chs_map2, chs_map3, chs_map4 = None, None, None, None, None
+    chs_map0, chs_map1, chs_map2, chs_map3 = None, None, None, None
 
   if is_gating:
     ctx += lyr.empty_ch(i='_x')
     ctx += lyr.merge('conv1', chs_map0, i='_x', o='_x')
 
   ctx += lyr.resnet_module_pool(chs_map0, chs_map1, is_gating, 2,3,4,5) #1
-  ctx += lyr.resnet_module(chs_map1, is_gating, 6,7,8) #2
-  ctx += lyr.resnet_module(chs_map1, is_gating, 9,10,11) #3
+  ctx += lyr.resnet_module(chs_map0, is_gating, 6,7,8) #2
+  ctx += lyr.resnet_module(chs_map0, is_gating, 9,10,11) #3
 
-  ctx += lyr.resnet_module_pool(chs_map1, chs_map2, is_gating, 12,13,14,15) #9
-  ctx += lyr.resnet_module(chs_map2, is_gating, 16,17,18) #10
-  ctx += lyr.resnet_module(chs_map2, is_gating, 19,20,21) #11
-  ctx += lyr.resnet_module(chs_map2, is_gating, 22,23,24) #12
+  ctx += lyr.resnet_module_pool(chs_map0, chs_map1, is_gating, 12,13,14,15) #9
+  ctx += lyr.resnet_module(chs_map1, is_gating, 16,17,18) #10
+  ctx += lyr.resnet_module(chs_map1, is_gating, 19,20,21) #11
+  ctx += lyr.resnet_module(chs_map1, is_gating, 22,23,24) #12
 
-  ctx += lyr.resnet_module_pool(chs_map2, chs_map3, is_gating, 25,26,27,28) #17
-  ctx += lyr.resnet_module(chs_map3, is_gating, 29,30,31) #18
-  ctx += lyr.resnet_module(chs_map3, is_gating, 32,33,34) #19
-  ctx += lyr.resnet_module(chs_map3, is_gating, 35,36,37) #20
-  ctx += lyr.resnet_module(chs_map3, is_gating, 38,39,40) #21
-  ctx += lyr.resnet_module(chs_map3, is_gating, 41,42,43) #21
+  ctx += lyr.resnet_module_pool(chs_map1, chs_map2, is_gating, 25,26,27,28) #17
+  ctx += lyr.resnet_module(chs_map2, is_gating, 29,30,31) #18
+  ctx += lyr.resnet_module(chs_map2, is_gating, 32,33,34) #19
+  ctx += lyr.resnet_module(chs_map2, is_gating, 35,36,37) #20
+  ctx += lyr.resnet_module(chs_map2, is_gating, 38,39,40) #21
+  ctx += lyr.resnet_module(chs_map2, is_gating, 41,42,43) #21
 
-  ctx += lyr.resnet_module_pool(chs_map3, chs_map4, is_gating, 44,45,46,47) #17
-  ctx += lyr.resnet_module(chs_map4, is_gating, 48,49,50) #18
-  ctx += lyr.resnet_module(chs_map4, is_gating, 51,52,53) #19
+  ctx += lyr.resnet_module_pool(chs_map2, chs_map3, is_gating, 44,45,46,47) #17
+  ctx += lyr.resnet_module(chs_map3, is_gating, 48,49,50) #18
+  ctx += lyr.resnet_module(chs_map3, is_gating, 51,52,53) #19
 
   if is_gating:
     ctx += lyr.mask('fc', chs_map2, i='_x', o='_x')
@@ -91,15 +91,15 @@ def _genDenseArchResNet50(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, c
   ctx += '\t\treturn x\n'
 
   # ResNet50 definition
-  ctx += 'def resnet50_flat(**kwargs):\n'
+  ctx += 'def resnet50_flat_01(**kwargs):\n'
   ctx += '\tmodel = ResNet50(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir2):
-      os.makedirs(out_f_dir2)
+  if not os.path.exists(out_f_dir):
+      os.makedirs(out_f_dir)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join(out_f_dir1, 'resnet50_flat.py'),'w')
+  f_out1 = open(os.path.join('/work/03883/erhoo/projects/spar/sparse_train_pytorch/src/models/imagenet', 'resnet50_flat_01.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
   f_out2.write(ctx)

@@ -266,7 +266,7 @@ def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False
     if 'cifar' in dataset:
       stages, ch_maps = stages_cifar[arch], []
     else:
-      stages, ch_maps = stages_imgnet[arch], []
+      stages, ch_maps = stages_imagenet[arch], []
 
     # Within a residual branch >> Union of adjacent pairs
     adj_lyrs = stages[10]

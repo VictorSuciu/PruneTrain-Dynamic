@@ -28,7 +28,7 @@ from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
 from custom.checkpoint_utils import _makeSparse
 from custom.checkpoint_utils import _genDenseModel
 from custom_arch import *
-from group_lasso_regs import _get_group_lasso_global, _get_group_lasso_group
+from group_lasso_regs import get_group_lasso_global, get_group_lasso_group
 import numpy as np
 
 # Models
@@ -128,6 +128,8 @@ parser.add_argument('--threshold_type', default='max', choices=['max', 'mean'], 
                     help='Thresholding type')
 parser.add_argument('--coeff_container', default='./coeff', type=str,
                     help='Directory to store lasso coefficient')
+parser.add_argument('--global_coeff', default=True, action='store_true',
+                    help='Use a global group lasso regularizaiton coefficient')
 parser.add_argument('--print-freq', default=100, type=int,
                     metavar='N', help='print frequency (default: 10)') 
 #======= Custom variables. end
@@ -149,6 +151,18 @@ if use_cuda:
 
 best_acc = 0  # best test accuracy
 
+# Sub-sampling dataset
+class LimitDataset(data.Dataset):
+    def __init__(self, dataset, n):
+        self.dataset = dataset
+        self.n = n
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, i):
+        return self.dataset[i]
+
 def main():
     global best_acc
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
@@ -167,6 +181,9 @@ def main():
                         transforms.RandomHorizontalFlip(),
                         transforms.ToTensor(),
                         normalize,]))
+
+    # Restrict the number of samples per class
+    train_dataset = LimitDataset(train_dataset, 200)
     
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -256,7 +273,7 @@ def main():
                     'imagenet',
                     is_gating=args.is_gating)
             # Reconstruct architecture
-            if args.arch_out_diri2 != None:
+            if args.arch_out_dir2 != None:
                 _genDenseModel(model, dense_chs, optimizer, args.arch, 'imagenet')
                 _genDenseArch = custom_arch_imgnet[args.arch]
                 if 'resnet' in args.arch:
@@ -316,7 +333,7 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
         data_load_time = time.time() - end
 
         if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda(async=True)
+            inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
         outputs = model(inputs)
@@ -327,9 +344,10 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
         lasso_time_start = time.time()
 
         if args.en_group_lasso:
-            if args.global_group_lasso:
-                lasso_penalty = _get_group_lasso(model, args.arch)
+            if args.global_coeff:
+                lasso_penalty = get_group_lasso_global(model, args.arch)
             else:
+                lasso_penalty = get_group_lasso_group(model, args.arch)
 
             # Auto-tune the group-lasso coefficient @first training iteration
             coeff_dir = os.path.join(args.coeff_container, 'imagenet', args.arch)

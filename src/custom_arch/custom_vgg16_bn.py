@@ -12,17 +12,15 @@ for i in range(1, 14):
     arch[bn_idx] = {'name':'bn'+str(i)}
 
 arch[26] = {'name':'pool', 'kernel_size':2, 'stride':2}
-arch[27] = {'name':'avgpool', 'num':'(7, 7)'}
+arch[27] = {'name':'avgpool_adt', 'num':'(7, 7)'}
 arch[28] = {'name':'relu'}
 arch[29] = {'name':'fc1'}
 arch[30] = {'name':'fc2'}
 arch[31] = {'name':'fc3'}
 arch[32] = {'name':'dropout'}
 
-def _genDenseArchVGG16(model, out_f_dir, arch_name, dense_chs, chs_map=None):
+def _genDenseArchVGG16(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
   print ("[INFO] Generating a new dense architecture...")
-
-  lyr_util = layerUtil(model)
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -85,15 +83,15 @@ def _genDenseArchVGG16(model, out_f_dir, arch_name, dense_chs, chs_map=None):
   ctx += lyr.forward('conv13')
   ctx += lyr.forward('bn13')
   ctx += lyr.forward('relu')
-  ctx += lyr.forward('avgpool')
+  ctx += lyr.forward('avgpool_adt')
   
   ctx += '\t\tx = x.view(x.size(0), -1)\n'
   ctx += lyr.forward('fc1')
   ctx += lyr.forward('relu')
-  ctx += '\t\tx = dropout(x)\n'
+  ctx += '\t\tx = self.dropout(x)\n'
   ctx += lyr.forward('fc2')
   ctx += lyr.forward('relu')
-  ctx += '\t\tx = dropout(x)\n'
+  ctx += '\t\tx = self.dropout(x)\n'
   ctx += lyr.forward('fc3')
   ctx += '\t\treturn x\n'
 
