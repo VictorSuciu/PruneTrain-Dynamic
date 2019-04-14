@@ -17,7 +17,6 @@ arch[22] = {'name':'fc', 'out_chs':'num_classes'}
 
 
 def _genDenseArchVGG13BN(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
-  print ("[INFO] Generating a new dense architecture...")
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -85,6 +84,7 @@ def _genDenseArchVGG13BN(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, ch
   if not os.path.exists(out_f_dir2):
       os.makedirs(out_f_dir2)
 
+  print ("[INFO] Generating a new dense architecture...")
   f_out1 = open(os.path.join(out_f_dir1, 'vgg13_bn_flat.py'),'w')
   f_out1.write(ctx)
   f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')

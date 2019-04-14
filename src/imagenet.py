@@ -25,10 +25,9 @@ import torchvision.models as models
 import models.imagenet as customized_models
 
 from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
-from custom.checkpoint_utils import _makeSparse
-from custom.checkpoint_utils import _genDenseModel
+from custom import _makeSparse, _genDenseModel, _DataParallel
+from custom import get_group_lasso_global, get_group_lasso_group
 from custom_arch import *
-from group_lasso_regs import get_group_lasso_global, get_group_lasso_group
 import numpy as np
 
 # Models
@@ -212,10 +211,10 @@ def main():
         model = models.__dict__[args.arch]()
 
     if args.arch.startswith('alexnet'):
-        model.features = torch.nn.DataParallel(model.features)
+        model.features = _DataParallel(model.features)
         model.cuda()
     else:
-        model = torch.nn.DataParallel(model).cuda()
+        model = _DataParallel(model).cuda()
 
     # Sanity check: print module name and shape
     #for name, param in model.named_parameters():

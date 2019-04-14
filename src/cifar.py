@@ -1,6 +1,6 @@
 '''
-Built on the training script for CIFAR10/100
-Copyright (c) Wei YANG, 2017
+
+
 '''
 from __future__ import print_function
 
@@ -21,11 +21,13 @@ import torchvision.datasets as datasets
 import models.cifar as models
 
 from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
-from custom.checkpoint_utils import _makeSparse
-from custom.checkpoint_utils import _genDenseModel
+#from custom.checkpoint_utils import _makeSparse, _genDenseModel, CustomDataParallel
+from custom import _makeSparse, _genDenseModel, _DataParallel
+from custom import get_group_lasso_global, get_group_lasso_group
 from custom_arch import *
-from group_lasso_regs import get_group_lasso_global, get_group_lasso_group
 import numpy as np
+
+from models import CustomModule
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -174,14 +176,8 @@ def main():
 
     # Model
     print("==> creating model '{}'".format(args.arch))
-    if args.arch.endswith('resnet'):
-        model = models.__dict__[args.arch](
-                    num_classes=num_classes,
-                    depth=args.depth,
-                )
-    else:
-        model = models.__dict__[args.arch](num_classes=num_classes)
-    model = torch.nn.DataParallel(model).cuda()
+    model = models.__dict__[args.arch](num_classes=num_classes)
+    model = _DataParallel(model).cuda()
 
     # Sanity check: print module name and shape
     #for name, param in model.named_parameters():

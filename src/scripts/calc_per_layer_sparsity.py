@@ -4,14 +4,12 @@ from os.path import isfile, join
 from statistics import mean
 from collections import OrderedDict
 
-#sys.path.append('..')
 from custom.checkpoint_utils_fp32 import Checkpoint
-#from custom.visualize_utils import plotFilterSparsity
 
 MB = 1024*1024
 
 out_dir = './temp'
-model_dir = '/work/03883/erhoo/projects/spar/sparse_train_pytorch/output/imagenet/resnet50/0.2'
+model_dir = './'
 
 check_point_names = [f for f in listdir(model_dir) if isfile(join(model_dir, f))  and 'checkpoint' in f]
 
@@ -23,6 +21,7 @@ for check_point_name in check_point_names:
 check_point_names = temp
 print(check_point_names)
 
+dataset = 'imagenet'
 arch = "resnet50_flat_01"
 target_lyr = 1
 threshold = 0.0001
@@ -64,6 +63,7 @@ def main():
     for idx, check_point_name in enumerate(check_point_names):
         print ("Processing check_point: " +os.path.join(model_dir, check_point_name))
         model = Checkpoint(arch, 
+                           dataset,
                            os.path.join(model_dir, check_point_name), 
                            num_classes,
                            depth)

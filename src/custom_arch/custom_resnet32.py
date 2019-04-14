@@ -27,7 +27,6 @@ def _genDenseArchResNet32(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, c
 
   # File heading
   ctx = 'import torch.nn as nn\n'
-  ctx += 'import torch\n'
   ctx += '__all__ = [\'resnet32_flat\']\n'
   ctx += 'class ResNet32(nn.Module):\n'
   ctx += '\tdef __init__(self, num_classes=10):\n'

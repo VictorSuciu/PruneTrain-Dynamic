@@ -8,9 +8,8 @@ import torch.nn as nn
 import heapq
 
 sys.path.append('..')
-#import models.cifar as models
-import models.imagenet as models
-#from models.imagenet import models
+import models.cifar as models_cifar
+import models.imagenet as models_imagenet
 from .resnet_stages import *
 from .rm_layers import getRmLayers
 
@@ -21,11 +20,13 @@ WORD_SIZE = 4
 MFLOPS = 1000000/2
 
 class Checkpoint():
-  def __init__(self, arch, model_path, num_classes, depth=None):
+  def __init__(self, arch, dataset, model_path, num_classes, depth=None):
     #print("{}, {}".format(models.__dict__, arch))
     self.arch = arch
-    #self.model = models.__dict__[arch](num_classes=num_classes)
-    self.model = models.__dict__[arch]()
+    if dataset == 'imagnet':
+      self.model = models_imagenet.__dict__[arch]()
+    else:
+      self.model = models_cifar.__dict__[arch](num_classes=num_classes)
     self.model = torch.nn.DataParallel(self.model)
     checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
     self.model.load_state_dict(checkpoint['state_dict'])
@@ -38,17 +39,11 @@ class Checkpoint():
 
   def printParams(self):
     print ("[INFO] print learning parameters")
-
     for name, param in self.model.named_parameters():
       print("{}: {}".format(name, list(param.shape)))
 
-    #for state in self.optimizer.state():
-    #  print ('=========>> {}'.format(state[temp_param]))
-        #for k, v in sorted(state.items()):
-        #  print("k: {}, v:{}".format(k, v.shape))
-
-  def getConvStructSparsity(self, threshold, file_name=None, arch=None):
-    return _getConvStructSparsity(self.model, threshold, file_name, self.arch)
+  def getConvStructSparsity(self, threshold, file_name=None, arch=None, dataset='imagenet'):
+    return _getConvStructSparsity(self.model, threshold, file_name, self.arch, dataset)
 
   def getFilterData(self, target_lyr):
     return _getFilterData(self.model, target_lyr)
@@ -58,8 +53,7 @@ def third_largest(numbers):
   return heapq.nlargest(3, numbers)[2]
 
 
-""" 
-Return 1D list of weights for the target layer
+""" Return 1D list of weights for the target layer
 """
 def _getFilterData(model, target_lyr):
   fil_data = {}
@@ -74,12 +68,11 @@ def _getFilterData(model, target_lyr):
   return fil_data
 
 
-""" 
-Return
+""" Return
 1. All layers' sparsity heat-map of filters (input channels / output channels)
 2. Output channel sparsity by epoch
 """
-def _getConvStructSparsity(model, threshold, file_name, arch):
+def _getConvStructSparsity(model, threshold, file_name, arch, dataset):
   conv_struct_density = {}
   conv_rand_density = {}
   sparse_bi_map = {}
@@ -88,12 +81,11 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
   model_size = 0
   acc_inf_cost = 0
 
-  #fmap = cifar_feature_size[arch]
-  fmap = imagenet_feature_size[arch]
-
-#  if file_name != None:
-#    out_file = open(file_name, 'w')
-
+  if dataset == 'imagenet':
+    fmap = imagenet_feature_size[arch]
+  else:
+    fmap = cifar_feature_size[arch]
+  
   tot_weights = 0
 
   for name, param in model.named_parameters():
@@ -163,7 +155,7 @@ def _getConvStructSparsity(model, threshold, file_name, arch):
 
       conv_struct_density[conv_id] = {'in_ch':in_density, 'out_ch':out_density}
       conv_rand_density[conv_id] = weight_density
-      print("{}: {}".format(name, weight_density))
+      #print("{}: {}".format(name, weight_density))
 
       model_size += num_dense_out_ch * num_dense_in_ch * filter_size # Add filters
       model_size += num_dense_out_ch  # Add bias
@@ -195,7 +187,7 @@ Make only the (conv, FC) layer parameters sparse
 - Match other layers' parameters when reconfiguring network
 - Only work for the flattened networks
 """
-def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False, reconf=False):
+def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False, reconf=True):
 
   print ("[INFO] Force the sparse filters to zero...")
   dense_chs, chs_temp, idx = {}, {}, 0
@@ -312,12 +304,12 @@ def _makeSparse(model, threshold, arch, threshold_type, dataset, is_gating=False
         # Maintain the dense channels at the shared node
         for lyr_name in stages[idx]['i']:
           if lyr_name in dense_chs:
-            print ("Input_ch [{}]: {} => {}".format(lyr_name, len(dense_chs[lyr_name]['in_chs']), len(edges)))
+            #print ("Input_ch [{}]: {} => {}".format(lyr_name, len(dense_chs[lyr_name]['in_chs']), len(edges)))
             dense_chs[lyr_name]['in_chs'] = edges
 
         for lyr_name in stages[idx]['o']:
           if lyr_name in dense_chs:
-            print ("Output_ch [{}]: {} => {}".format(lyr_name, len(dense_chs[lyr_name]['out_chs']), len(edges)))
+            #print ("Output_ch [{}]: {} => {}".format(lyr_name, len(dense_chs[lyr_name]['out_chs']), len(edges)))
             dense_chs[lyr_name]['out_chs'] = edges
 
       #for name in dense_chs:
@@ -518,6 +510,8 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
     
     # Remove model parameters
     for rm_lyr in rm_lyrs:
+      print("4==========================")
+      print("del_param_in_flat_arch" in dir(model))
       model.del_param_in_flat_arch(rm_lyr)
 
     idxs, rm_params = [], []

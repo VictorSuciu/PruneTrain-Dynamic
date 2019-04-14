@@ -10,7 +10,6 @@ from custom.visualize_utils import plotFilterSparsity, plotLayerSparsity, plotFi
 
 MB = 1024*1024
 
-#out_dir = '/home/sklym/Documents/sparse_train/cifar100_resnet32/sparse_train/auto_coef/0.1'
 out_dir = './temp'
 model_dir = '/work/03883/erhoo/projects/spar/sparse_train_pytorch/output/imagenet/resnet50/archive2/0.25'
 
@@ -28,6 +27,7 @@ temp = ['checkpoint90.tar']
 
 check_point_names = temp
 
+dataset = 'imagenet'
 arch = "resnet50_flat"
 threshold = 0.0001
 depth = 20
@@ -72,6 +72,7 @@ def main():
     for idx, check_point_name in enumerate(check_point_names):
         print ("Processing check_point: " +os.path.join(model_dir, check_point_name))
         model = Checkpoint(arch, 
+                           dataset,
                            os.path.join(model_dir, check_point_name), 
                            num_classes)
 

@@ -1,12 +1,14 @@
 """ Flattened ResNet50 for ImageNet
 """
 
-import torch.nn as nn
+#import torch.nn as nn
+from .. import CustomModule
 import math
 
 __all__ = ['resnet50_flat']
 
-class ResNet50(nn.Module):
+#class ResNet50(nn.Module):
+class ResNet50(CustomModule):
 
     # This should be redefined by the channel count
     def __init__(self, num_classes=1000):

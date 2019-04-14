@@ -20,7 +20,6 @@ arch[31] = {'name':'fc3'}
 arch[32] = {'name':'dropout'}
 
 def _genDenseArchVGG16(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
-  print ("[INFO] Generating a new dense architecture...")
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -103,6 +102,7 @@ def _genDenseArchVGG16(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_
   if not os.path.exists(out_f_dir2):
       os.makedirs(out_f_dir2)
 
+  print ("[INFO] Generating a new dense architecture...")
   f_out1 = open(os.path.join(out_f_dir1, 'vgg16_flat.py'),'w')
   f_out1.write(ctx)
   f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
