@@ -10,8 +10,8 @@ We also provide the pruned models and network architecture file.
 
 | Dataset        | Model           | Removed Training FLOPs | Removed Inference FLOPs  | Top1 Error | Model | Network architecture |
 |:--------------:|:---------------:|:----------------------:|:------------------------:|:----------:|:-----:|:--------------------:|
-| CIFAR10        | ResNet32        | XX%                    |   XX%                    |            |       |                      |
-| ^              | ResNet50        | XX%                    |   XX%                    |            |       |                      |
+| /2. CIFAR10        | ResNet32        | XX%                    |   XX%                    |            |       |                      |
+                 | ResNet50        | XX%                    |   XX%                    |            |       |                      |
 | ^              | ResNet50        | XX%                    |   XX%                    |            |       |                      |
 | CIFAR100       | ResNet32        | XX%                    |   XX%                    |            |       |                      |
 | ^              | ResNet50        | XX%                    |   XX%                    |            |       |                      |
