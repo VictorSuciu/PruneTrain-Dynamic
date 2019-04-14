@@ -1,10 +1,20 @@
-'''
-Built on the training script for ImageNet
-Copyright (c) Wei YANG, 2017
+"""
+ Copyright 2019 Sangkug Lym
+ Copyright 2019 The University of Texas at Austin
 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
+     http://www.apache.org/licenses/LICENSE-2.0
 
-'''
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+
 from __future__ import print_function
 
 import argparse
@@ -24,7 +34,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 import models.imagenet as customized_models
 
-from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
+from utils import Logger, AverageMeter, accuracy, mkdir_p
 from custom import _makeSparse, _genDenseModel, _DataParallel
 from custom import get_group_lasso_global, get_group_lasso_group
 from custom_arch import *
@@ -48,11 +58,10 @@ model_names = default_model_names + customized_models_names
 # Parse arguments
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
-# Datasets
+# Baseline
 parser.add_argument('--data_path', default='path to dataset', type=str)
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-# Optimization options
 parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=1, type=int, metavar='N',
@@ -63,8 +72,6 @@ parser.add_argument('--test_batch', default=200, type=int, metavar='N',
                     help='test batchsize (default: 200)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     metavar='LR', help='initial learning rate')
-parser.add_argument('--drop', '--dropout', default=0, type=float,
-                    metavar='Dropout', help='Dropout ratio')
 parser.add_argument('--schedule', type=int, nargs='+', default=[150, 225],
                         help='Decrease learning rate at these epochs.')
 parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
@@ -72,32 +79,18 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
-# Checkpoints
 parser.add_argument('-c', '--checkpoint', default='checkpoint', type=str, metavar='PATH',
                     help='path to save checkpoint (default: checkpoint)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-# Architecture
 parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet18',
-                    choices=model_names,
-                    help='model architecture: ' +
-                        ' | '.join(model_names) +
-                        ' (default: resnet18)')
-parser.add_argument('--depth', type=int, default=29, help='Model depth.')
-parser.add_argument('--cardinality', type=int, default=32, help='ResNet cardinality (group).')
-parser.add_argument('--base-width', type=int, default=4, help='ResNet base width.')
-parser.add_argument('--widen-factor', type=int, default=4, help='Widen factor. 4 -> 64, 8 -> 128, ...')
-# Miscs
-parser.add_argument('--manualSeed', type=int, help='manual seed')
+                    choices=model_names, help='model architecture')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--pretrained', dest='pretrained', action='store_true',
-                    help='use pre-trained model')
-#Device options
 parser.add_argument('--gpu-id', default='0', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 
-#======= Custom variables. begin
+# PruneTrain
 parser.add_argument('--schedule-exp', type=int, default=0, help='Exponential LR decay.')
 parser.add_argument('--save_checkpoint', default=10, type=int, 
                     help='Interval to save checkpoint')
@@ -130,7 +123,6 @@ parser.add_argument('--global_coeff', default=True, action='store_true',
                     help='Use a global group lasso regularizaiton coefficient')
 parser.add_argument('--print-freq', default=100, type=int,
                     metavar='N', help='print frequency (default: 10)') 
-#======= Custom variables. end
 
 args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
@@ -150,16 +142,16 @@ if use_cuda:
 best_acc = 0  # best test accuracy
 
 # Sub-sampling dataset
-class LimitDataset(data.Dataset):
-    def __init__(self, dataset, n):
-        self.dataset = dataset
-        self.n = n
-
-    def __len__(self):
-        return self.n
-
-    def __getitem__(self, i):
-        return self.dataset[i]
+#class LimitDataset(data.Dataset):
+#    def __init__(self, dataset, n):
+#        self.dataset = dataset
+#        self.n = n
+#
+#    def __len__(self):
+#        return self.n
+#
+#    def __getitem__(self, i):
+#        return self.dataset[i]
 
 def main():
     global best_acc
@@ -181,7 +173,7 @@ def main():
                         normalize,]))
 
     # Restrict the number of samples per class
-    train_dataset = LimitDataset(train_dataset, 200)
+    #train_dataset = LimitDataset(train_dataset, 200)
     
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -203,12 +195,8 @@ def main():
         pin_memory=True)
 
     # Momdel creation
-    if args.pretrained:
-        print("=> using pre-trained model '{}'".format(args.arch))
-        model = models.__dict__[args.arch](pretrained=True)
-    else:
-        print("=> creating model '{}'".format(args.arch))
-        model = models.__dict__[args.arch]()
+    print("=> creating model '{}'".format(args.arch))
+    model = models.__dict__[args.arch]()
 
     if args.arch.startswith('alexnet'):
         model.features = _DataParallel(model.features)

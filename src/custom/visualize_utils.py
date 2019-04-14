@@ -1,3 +1,20 @@
+"""
+ Copyright 2019 Sangkug Lym
+ Copyright 2019 The University of Texas at Austin
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,10 +22,12 @@ from matplotlib.colors import LogNorm
 from matplotlib import colors
 import math as mt
 
-"""
-Plot the filter sparsity
-Row: input-channel
-Col: output-channel
+""" Plot the filter sparsity pattern
+# checkpoint_name: input-channel
+# sparse_map: 2D data each for the max filter value (x: input channel index, y: output channel index)
+# threshold: criteria to quantize value to zero
+# out_dir: directory to store output file
+# num_lyrs: the number of convolution layers
 """
 def plotFilterSparsity(checkpoint_name, sparse_map, threshold, out_dir, num_lyrs):
   rows = 3
@@ -46,8 +65,7 @@ def plotFilterSparsity(checkpoint_name, sparse_map, threshold, out_dir, num_lyrs
   plt.close()
 
 
-"""
-Plot the value of output channels over epochs
+""" Plot the value of output channels over epochs
 Goal: Show the sparsified channel value revive through back-propagation
 symlog graph to visualize zero value
 """

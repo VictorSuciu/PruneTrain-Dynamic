@@ -1,7 +1,3 @@
-""" Metaprogramed custom CNN architecture file generatgor
-# Each file generates a flattened CNN architecture file given a CNN model description
-"""
-
 from .arch_utils import *
 
 # CIFAR10/100
