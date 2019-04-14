@@ -1,8 +1,9 @@
-"""  All unique layers of AlexNet for CIFAR10/100
+""" All unique layers of AlexNet for CIFAR10/100
 """
 
 import os
 from .arch_utils import layerUtil
+
 
 arch = {}
 arch[0] = {'name':'conv1', 'kernel_size':11, 'stride':4, 'padding':5, 'bias':True}
@@ -14,13 +15,7 @@ arch[5] = {'name':'pool', 'kernel_size':2, 'stride':2}
 arch[6] = {'name':'relu'}
 arch[7] = {'name':'fc', 'out_chs':'num_classes'}
 
-
-"""
-Generate dense AelxNet architecture
-- Only input/output channel number change
-"""
-def _genDenseArchAlexNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
-  lyr_util = layerUtil(model)
+def _genDenseArchAlexNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map, is_gating=False):
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -29,33 +24,26 @@ def _genDenseArchAlexNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, ch
   ctx += '\tdef __init__(self, num_classes=10):\n'
   ctx += '\t\tsuper(AlexNet, self).__init__()\n'
 
+  lyr = layerUtil(model, dense_chs)
+
   # Layer definition
   for idx in sorted(arch):
-    name = arch[idx]['name']
-    if   'conv' in name:  ctx += lyr_util.convLayer(name, arch[idx])
-    elif 'relu' == name:  ctx += lyr_util.reluLayer()
-    elif 'pool' == name:  ctx += lyr_util.poolLayer(arch[idx])
-    elif 'fc'   == name:  ctx += lyr_util.fcLayer(name, arch[idx])
-    else: assert True, 'wrong layer name'
-
-  # Architecture sequential
-  def forward(name):
-    return '\t\tx = self.{}(x)\n'.format(name)
+    ctx += lyr.getLayerDef(arch[idx])
 
   ctx += '\tdef forward(self, x):\n'
-  ctx += forward('conv1')
-  ctx += forward('relu')
-  ctx += forward('pool')
-  ctx += forward('conv2')
-  ctx += forward('relu')
-  ctx += forward('pool')
-  ctx += forward('conv3')
-  ctx += forward('relu')
-  ctx += forward('conv4')
-  ctx += forward('relu')
-  ctx += forward('conv5')
-  ctx += forward('relu')
-  ctx += forward('pool')
+  ctx += lyr.forward('conv1')
+  ctx += lyr.forward('relu')
+  ctx += lyr.forward('pool')
+  ctx += lyr.forward('conv2')
+  ctx += lyr.forward('relu')
+  ctx += lyr.forward('pool')
+  ctx += lyr.forward('conv3')
+  ctx += lyr.forward('relu')
+  ctx += lyr.forward('conv4')
+  ctx += lyr.forward('relu')
+  ctx += lyr.forward('conv5')
+  ctx += lyr.forward('relu')
+  ctx += lyr.forward('pool')
   ctx += '\t\tx = x.view(x.size(0), -1)\n'
   ctx += forward('fc')
   ctx += '\t\treturn x\n'
@@ -73,6 +61,3 @@ def _genDenseArchAlexNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, ch
   f_out1.write(ctx)
   f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)
-
-
-

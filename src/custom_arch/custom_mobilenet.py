@@ -35,7 +35,7 @@ arch[28] = {'name':'fc', 'out_chs':1000}
 Generate dense VGG11_BN architecture
 - Only input/output channel number change
 """
-def _genDenseArchMobileNet(model, out_f_dir, arch_name, dense_chs, chs_map=None):
+def _genDenseArchMobileNet(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
 
   # File heading
   ctx = 'import torch.nn as nn\n'
@@ -157,12 +157,12 @@ def _genDenseArchMobileNet(model, out_f_dir, arch_name, dense_chs, chs_map=None)
   ctx += '\tmodel = MobileNet(**kwargs)\n'
   ctx += '\treturn model\n'
 
-  if not os.path.exists(out_f_dir):
-      os.makedirs(out_f_dir)
+  if not os.path.exists(out_f_dir2):
+      os.makedirs(out_f_dir2)
 
   print ("[INFO] Generating a new dense architecture...")
-  f_out1 = open(os.path.join('/work/03883/erhoo/projects/spar/sparse_train_pytorch/models/imagenet', 'mobilenet.py'),'w')
+  f_out1 = open(os.path.join(out_f_dir1, 'mobilenet.py'),'w')
   f_out1.write(ctx)
-  f_out2 = open(os.path.join(out_f_dir, arch_name),'w')
+  f_out2 = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out2.write(ctx)
 

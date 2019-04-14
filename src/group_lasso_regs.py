@@ -1,5 +1,10 @@
 import torch
 
+""" A single global group-lasso regularization coefficient
+# 1. Exclude depth-wise separable convolution from regularization
+# 2. Exclude first layer's input channel and last layer's output from regularization
+# 3. Consider multi-layer classifier
+"""
 def get_group_lasso_global(model, arch):
     lasso_in_ch = []
     lasso_out_ch = []
@@ -21,6 +26,7 @@ def get_group_lasso_global(model, arch):
                     lasso_out_ch.append( _out )
 
             elif param.dim() == 2:
+                # Multi-FC-layer based classifier (only fc or fc3 are the last layers)
                 if ('fc1' in name) or ('fc2' in name):
                     lasso_out_ch.append( param.pow(2).sum(dim=[1]) )
                 lasso_in_ch.append( param.pow(2).sum(dim=[0]) )
@@ -35,6 +41,11 @@ def get_group_lasso_global(model, arch):
     return lasso_penalty
 
 
+""" Number of parameter-based per-group regularization coefficient
+# 1. Exclude depth-wise separable convolution from regularization
+# 2. Exclude first layer's input channel and last layer's output from regularization
+# 3. Consider multi-layer classifier
+"""
 def get_group_lasso_group(model):
     lasso_in_ch = []
     lasso_out_ch = []
@@ -78,14 +89,12 @@ def get_group_lasso_group(model):
 
     _lasso_in_ch         = torch.cat(lasso_in_ch).cuda()
     _lasso_out_ch        = torch.cat(lasso_out_ch).cuda()
-
     lasso_penalty_in_ch  = _lasso_in_ch.add(1.0e-8).sqrt()
     lasso_penalty_out_ch = _lasso_out_ch.add(1.0e-8).sqrt()
 
     # Extra penalty using the number of parameters in each group
     lasso_in_ch_penalty  = torch.cat(lasso_in_ch_penalty).cuda().sqrt()
     lasso_out_ch_penalty  = torch.cat(lasso_out_ch_penalty).cuda().sqrt()
-
     lasso_penalty_in_ch  = lasso_penalty_in_ch.mul(lasso_in_ch_penalty).sum()
     lasso_penalty_out_ch = lasso_penalty_out_ch.mul(lasso_out_ch_penalty).sum()
 

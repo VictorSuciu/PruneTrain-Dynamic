@@ -26,8 +26,8 @@ custom_arch_cifar = {
     'resnet50_bt_flat':_genDenseArchResNet50BT
 }
 
-custom_arch_imgnet = {
+custom_arch_imagenet = {
     'resnet50_flat':_genDenseArchResNet50,
-    'mobilenet':_genDenseArchMobileNet,
+    'mobilenet_flat':_genDenseArchMobileNet,
     'vgg16_flat':_genDenseArchVGG16,
 }

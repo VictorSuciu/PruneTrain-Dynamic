@@ -15,7 +15,7 @@ arch[10] = {'name':'pool', 'kernel_size':2, 'stride':2}
 arch[11] = {'name':'relu'}
 arch[12] = {'name':'fc', 'out_chs':'num_classes'}
 
-def _genDenseArchVGG8BN(model, out_f_dir1, out_f_dir2, dense_chs, chs_map=None):
+def _genDenseArchVGG8BN(model, out_f_dir1, out_f_dir2, arch_name, dense_chs, chs_map=None):
   print ("[INFO] Generating a new dense architecture...")
 
   # File heading
@@ -71,5 +71,5 @@ def _genDenseArchVGG8BN(model, out_f_dir1, out_f_dir2, dense_chs, chs_map=None):
 
   f_out1 = open(os.path.join(out_f_dir1, 'vgg8_bn_flat.py'),'w')
   f_out1.write(ctx)
-  f_out = open(os.path.join(out_f_dir2, 'vgg8_bn_flat.py'),'w')
+  f_out = open(os.path.join(out_f_dir2, arch_name),'w')
   f_out.write(ctx)

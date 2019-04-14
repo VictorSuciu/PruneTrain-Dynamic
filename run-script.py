@@ -4,18 +4,16 @@ import argparse
 
 # Argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument('--data-train', type=str, default='./', help='path to train dataset')
-parser.add_argument('--data-val', type=str, default='./', help='path to validation dataset')
-parser.add_argument('--dataset', default = 'imagenet', type=str, 
-                    choices=['imagenet', 'cifar10', 'cifar100'], help='model name')
+parser.add_argument('--data-path', type=str, required=True, help='path to validation dataset')
+parser.add_argument('--dataset', default='imagenet', type=str, 
+                    choices=['imagenet', 'cifar10', 'cifar100'], help='dataset name')
 parser.add_argument('--model', default = 'resnet50', type=str, help='model name')
-parser.add_argument('--num-gpus', default = 1, type=int, 
-                     help='number of GPUs used for trianing')
+parser.add_argument('--num-gpus', default=1, type=int, help='number of GPUs used in training')
 args = parser.parse_args()
 
 # Load configuration
 if args.dataset == 'imagenet':
-    assert args.model in ['resnet50', 'vgg16']
+    assert args.model in ['resnet50', 'vgg16', 'mobilenet']
     cfg_file = "imagenet_{}.yaml".format(args.model)
     runfile = 'python src/imagenet.py'
 elif args.dataset in ['cifar10', 'cifar100']:
@@ -33,7 +31,7 @@ with open(os.path.join('configs/', cfg_file)) as f_config:
 if not os.path.exists(cfg['base']['model_dir']):
     os.makedirs(cfg['base']['model_dir'])
 
-# Data parallism setup
+# Data parallelism setup
 gpu_id = '0'
 for i in range(1,args.num_gpus):
     gpu_id +=','+str(i)
@@ -44,14 +42,13 @@ cfg['base']['train_batch']   = int(cfg['base']['train_batch']*args.num_gpus/4)
 arch_name = cfg['base']['arch']+'_'+cfg['base']['description']
 arch_out_dir = os.path.join(cfg['base']['model_dir'], 'arch', cfg['base']['description'])
 
-skip = []
-
 # Build command line
+# Iterate reconfiguration intervals
 for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
-    cmd_line = run_file
+    cmd_line = runfile
     cmd_line += ' --workers '               +str(cfg['base']['workers'])
-    cmd_line += ' --data_train '            +args.data_train
-    cmd_line += ' --data_val '              +args.data_val
+    cmd_line += ' --data_path '             +args.data_path if args.dataset == 'imagenet' else ''
+    cmd_line += ' --dataset '               +args.dataset if args.dataset.startswith('cifar') else ''
     cmd_line += ' --epochs '                +str(cur_epoch + cfg['pt']['sparse_interval'])
     cmd_line += ' --learning-rate '         +str(cfg['base']['learning-rate'])
     cmd_line += ' --schedule '              +str(cfg['base']['schedule'])
@@ -72,10 +69,9 @@ for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
     cmd_line += ' --arch_out_dir2 '         +arch_out_dir if cfg['pt']['reconf_arch'] else ''
     cmd_line += ' >> '                      +os.path.join(cfg['base']['model_dir'], cfg['base']['description'])+'.log'
 
-    if cur_epoch not in skip:
-        print (cmd_line)
-        os.system(cmd_line)
+    print (cmd_line)
+    os.system(cmd_line)
 
-    # checkpoint to resume
+    # Checkpoint to resume
     checkpoint = 'checkpoint.pth.tar'
     cfg['base']['resume'] = os.path.join(cfg['base']['model_dir'], cfg['base']['description'], 'checkpoint.pth.tar')

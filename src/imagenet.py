@@ -50,8 +50,7 @@ model_names = default_model_names + customized_models_names
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 
 # Datasets
-parser.add_argument('--data_train', default='path to dataset', type=str)
-parser.add_argument('--data_val', default='path to dataset', type=str)
+parser.add_argument('--data_path', default='path to dataset', type=str)
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 # Optimization options
@@ -69,7 +68,6 @@ parser.add_argument('--drop', '--dropout', default=0, type=float,
                     metavar='Dropout', help='Dropout ratio')
 parser.add_argument('--schedule', type=int, nargs='+', default=[150, 225],
                         help='Decrease learning rate at these epochs.')
-parser.add_argument('--schedule-exp', type=int, default=0, help='Exponential LR decay.')
 parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
@@ -101,6 +99,7 @@ parser.add_argument('--gpu-id', default='0', type=str,
                     help='id(s) for CUDA_VISIBLE_DEVICES')
 
 #======= Custom variables. begin
+parser.add_argument('--schedule-exp', type=int, default=0, help='Exponential LR decay.')
 parser.add_argument('--save_checkpoint', default=10, type=int, 
                     help='Interval to save checkpoint')
 parser.add_argument('--sparse_interval', default=0, type=int, 
@@ -171,8 +170,8 @@ def main():
         mkdir_p(args.checkpoint)
 
     # Data loading code
-    traindir = args.data_train
-    valdir = args.data_val
+    traindir  = os.path.join(args.data_path, 'train')
+    valdir    = os.path.join(args.data_path, 'validation')
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
@@ -264,18 +263,17 @@ def main():
         # append logger file
         logger.append([state['lr'], train_loss, test_loss, train_acc, test_acc, lasso_ratio, train_epoch_time, test_epoch_time])
 
-
         # SparseTrain routine
         if args.en_group_lasso and (epoch % args.sparse_interval == 0):
             # Force weights under threshold to zero
             dense_chs, chs_map = _makeSparse(model, args.threshold, args.arch, 
-                    args.threshold_type,
-                    'imagenet',
-                    is_gating=args.is_gating)
+                                             args.threshold_type,
+                                             'imagenet',
+                                             is_gating=args.is_gating)
             # Reconstruct architecture
             if args.arch_out_dir2 != None:
                 _genDenseModel(model, dense_chs, optimizer, args.arch, 'imagenet')
-                _genDenseArch = custom_arch_imgnet[args.arch]
+                _genDenseArch = custom_arch_imagenet[args.arch]
                 if 'resnet' in args.arch:
                     _genDenseArch(model, args.arch_out_dir1, args.arch_out_dir2, 
                                 args.arch_name, dense_chs, 

@@ -5,13 +5,13 @@ Flattened ResNet50 for CIFAR10/100
 import torch.nn as nn
 import math
 
-__all__ = ['resnet50_flat']
+__all__ = ['resnet50_bt_flat']
 
 class ResNet50(nn.Module):
 
     # This should be redefined by the channel count
     def __init__(self, num_classes=10):
-        super(ResNet50BT, self).__init__()
+        super(ResNet50, self).__init__()
         self.conv1  = nn.Conv2d(3, 16, kernel_size=3, padding=1, bias=False, stride=1)
         self.bn1    = nn.BatchNorm2d(16)
 
@@ -530,6 +530,6 @@ class ResNet50(nn.Module):
         x = self.fc(x)
         return x
 
-def resnet50_flat(**kwargs):
+def resnet50_bt_flat(**kwargs):
     model = ResNet50(**kwargs)
     return model

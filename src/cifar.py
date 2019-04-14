@@ -24,7 +24,7 @@ from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
 from custom.checkpoint_utils import _makeSparse
 from custom.checkpoint_utils import _genDenseModel
 from custom_arch import *
-from group_lasso_regs import _get_group_lasso_global, _get_group_lasso_group
+from group_lasso_regs import get_group_lasso_global, get_group_lasso_group
 import numpy as np
 
 model_names = sorted(name for name in models.__dict__
@@ -88,16 +88,19 @@ parser.add_argument('--sparse_interval', default=0, type=int,
                     help='Interval to force the value under threshold')
 parser.add_argument('--threshold', default=0.0001, type=float, 
                     help='Threshold to force weight to zero')
-parser.add_argument('--sparse_train', action='store_true',
-                    help='Force the weights in the middle of training')
 parser.add_argument('--en_group_lasso', default=False, action='store_true',
                     help='Set the group-lasso coefficient')
+parser.add_argument('--global_group_lasso', default=True, action='store_true',
+                    help='True: use a global group lasso coefficient, '
+                    'False: use sqrt(num_params) as a coefficient for each group')
 parser.add_argument('--var_group_lasso_coeff', default=0.1, type=float,
                     help='Ratio = group-lasso / (group-lasso + loss)')
 parser.add_argument('--grp_lasso_coeff', default=0.0005, type=float,
                     help='claim as a global param')
-parser.add_argument('--arch_out_dir', default=None, type=str,
+parser.add_argument('--arch_out_dir1', default=None, type=str,
                     help='directory to store the temporary architecture file')
+parser.add_argument('--arch_out_dir2', default=None, type=str,
+                    help='directory to architecture files matching to checkpoints ')
 parser.add_argument('--arch_name', default='net.py', type=str,
                     help='name of the new architecture')
 parser.add_argument('--is_gating', default=False, action='store_true',
@@ -106,6 +109,8 @@ parser.add_argument('--threshold_type', default='max', choices=['max', 'mean'], 
                     help='Thresholding type')
 parser.add_argument('--coeff_container', default='./coeff', type=str,
                     help='Directory to store lasso coefficient')
+parser.add_argument('--global_coeff', default=True, action='store_true',
+                    help='Use a global group lasso regularizaiton coefficient')
 parser.add_argument('--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)') 
 #======= Custom variables. end
@@ -224,22 +229,29 @@ def main():
         # append logger file
         logger.append([state['lr'], train_loss, test_loss, train_acc, test_acc, lasso_ratio, train_epoch_time, test_epoch_time])
 
+        # SparseTrain routine
+        if args.en_group_lasso and (epoch % args.sparse_interval == 0):
+            # Force weights under threshold to zero
+            dense_chs, chs_map = _makeSparse(model, args.threshold, args.arch, 
+                                             args.threshold_type,
+                                             'cifar',
+                                             is_gating=args.is_gating)
+            # Reconstruct architecture
+            if args.arch_out_dir2 != None:
+                _genDenseModel(model, dense_chs, optimizer, args.arch, 'cifar')
+                _genDenseArch = custom_arch_cifar[args.arch]
+                if 'resnet' in args.arch:
+                    _genDenseArch(model, args.arch_out_dir1, args.arch_out_dir2, 
+                                args.arch_name, dense_chs, 
+                                chs_map, args.is_gating)
+                else:
+                    _genDenseArch(model, args.arch_out_dir1, args.arch_out_dir2, 
+                                args.arch_name, dense_chs, chs_map)
+
+
         # save model
         is_best = test_acc > best_acc
         best_acc = max(test_acc, best_acc)
-
-        if args.sparse_train and ((epoch +1) % args.sparse_interval == 0):
-            # Force weights under threshold to zero
-            dense_chs, chs_map = _makeSparse(model, args.threshold, args.arch, is_gating=args.is_gating)
-
-            # Reconstruct architecture
-            if args.arch_out_dir != None:
-                _genDenseModel(model, dense_chs, optimizer, args.arch)
-                _genDenseArch = custom_arch[args.arch]
-                if 'resnet' in args.arch:
-                    _genDenseArch(model, args.arch_out_dir, args.arch_name, dense_chs, chs_map, args.is_gating)
-                else:
-                    _genDenseArch(model, args.arch_out_dir, args.arch_name, dense_chs, chs_map)
 
         print("[INFO] Storing checkpoint...")
         save_checkpoint({
@@ -287,22 +299,22 @@ def train(trainloader, model, criterion, optimizer, epoch, use_cuda):
         data_load_time = time.time() - end
 
         if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda(async=True)
+            inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
 
         outputs = model(inputs)
         loss = criterion(outputs, targets)
 
         # lasso penalty
-        init_batch = batch_idx == 0 and epoch == 0
+        init_batch = batch_idx == 0 and epoch == 1
 
         lasso_time_start = time.time()
 
-        if args.en_auto_lasso_coeff:
         if args.en_group_lasso:
             if args.global_group_lasso:
-                lasso_penalty = _get_group_lasso(model, args.arch)
+                lasso_penalty = get_group_lasso_global(model, args.arch)
             else:
+                lasso_penalty = get_group_lasso_group(model, args.arch)
 
             # Auto-tune the group-lasso coefficient @first training iteration
             coeff_dir = os.path.join(args.coeff_container, 'cifar', args.arch)
@@ -351,7 +363,7 @@ def train(trainloader, model, criterion, optimizer, epoch, use_cuda):
             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
             'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
             'Acc@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
-                epoch, batch_idx, len(train_loader), batch_time=batch_time,
+                epoch, batch_idx, len(trainloader), batch_time=batch_time,
                 data_time=data_time, loss=losses, top1=top1, top5=top5))
 
     epoch_time = batch_time.avg * len(trainloader)    # Time for total training dataset
