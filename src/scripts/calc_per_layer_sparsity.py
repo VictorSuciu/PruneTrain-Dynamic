@@ -8,8 +8,8 @@ from custom.checkpoint_utils_fp32 import Checkpoint
 
 MB = 1024*1024
 
-out_dir = './temp'
-model_dir = './'
+out_dir = '/path/to/store/output'
+model_dir = '/path/to/model'
 
 check_point_names = [f for f in listdir(model_dir) if isfile(join(model_dir, f))  and 'checkpoint' in f]
 

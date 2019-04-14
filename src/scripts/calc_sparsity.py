@@ -1,5 +1,3 @@
-#!/home/sklym/anaconda2/bin/python
-
 import os, sys
 from os import listdir
 from os.path import isfile, join
@@ -10,21 +8,12 @@ from custom.visualize_utils import plotFilterSparsity, plotLayerSparsity, plotFi
 
 MB = 1024*1024
 
-out_dir = './temp'
-model_dir = '/work/03883/erhoo/projects/spar/sparse_train_pytorch/output/imagenet/resnet50/archive2/0.25'
+out_dir = 'path/to/store/output'
+model_dir = '/path/to/model'
 
 check_point_names = [f for f in listdir(model_dir) if isfile(join(model_dir, f))  and 'checkpoint' in f]
-#temp = {}
-#for check_point_name in check_point_names:
-#    temp[int(check_point_name.split('.')[1])] = check_point_name
-#check_point_names = [f[1] for f in sorted(temp.items())]
 
-#temp = []
-#for check_point_name in check_point_names:
-#    if "checkpoint.240.tar" in check_point_name:
-#        temp.append(check_point_name)
 temp = ['checkpoint90.tar']
-
 check_point_names = temp
 
 dataset = 'imagenet'
