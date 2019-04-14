@@ -9,6 +9,7 @@ parser.add_argument('--dataset', default='imagenet', type=str,
                     choices=['imagenet', 'cifar10', 'cifar100'], help='dataset name')
 parser.add_argument('--model', default = 'resnet50', type=str, help='model name')
 parser.add_argument('--num-gpus', default=1, type=int, help='number of GPUs used in training')
+parser.add_argument('--penalty-ratio', default=0.2, type=float, help='group lasso regularization penalty ratio')
 args = parser.parse_args()
 
 # Load configuration
@@ -62,7 +63,7 @@ for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
 
     cmd_line += ' --sparse_interval '       +str(cfg['pt']['sparse_interval'])
     cmd_line += ' --threshold '             +str(cfg['pt']['threshold'])
-    cmd_line += ' --var_group_lasso_coeff ' +str(cfg['pt']['var_group_lasso_coeff'])
+    cmd_line += ' --var_group_lasso_coeff ' +str(args.penalty_ratio)
     cmd_line += ' --arch_name '             +arch_name+'_'+str(cur_epoch+cfg['pt']['sparse_interval'])+'.py'
     cmd_line += ' --en_group_lasso '        if cfg['pt']['en_group_lasso'] else ''
     cmd_line += ' --arch_out_dir1 '         +cfg['base']['arch_dir']

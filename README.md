@@ -8,27 +8,34 @@ We flatten CNN architectures (each layer module definition) to support easy netw
 
 We also provide the pruned models and network architecture file.
 
-| Dataset        | Model           | Removed training FLOPs | Removed inference FLOPs  | Top1 error (fine-tuning) | Model | Network architecture |
+| Dataset        | Model           | Removed training FLOPs | Removed inference FLOPs  | Top1 error (fine-tuning) | Model | Network |
 |----------------|:---------------:|:----------------------:|:------------------------:|:------------:|:-----:|:--------------------:|
 | CIFAR10        | ResNet32        | 53%                    |   66%                    | 91.8%        |       |                      |
 | CIFAR10        | ResNet50        | 50%                    |   70%                    | 93.1%        |       |                      |
 | CIFAR100       | ResNet32        | 32%                    |   46%                    | 69.5%        |       |                      |
 | CIFAR100       | ResNet50        | 53%                    |   69%                    | 72.4%        |       |                      |
-| ImageNet       | ResNet50        | 37%                    |   53%                    | 74.4%(74.6%) |       |                      |
-| ImageNet       | ResNet50        | 29%                    |   43%                    | 74.7%(75.2%) |       |                      |
+| ImageNet       | ResNet50        | 37%                    |   53%                    | 74.4% (74.6%) |       |                      |
+| ImageNet       | ResNet50        | 29%                    |   43%                    | 74.7% (75.2%) |       |                      |
 
 
 # Training Examples
 
 * Training ResNet32 on CIFAR10 with 1 GPU
-'''
+```
 python run-script.py --data-path /path/to/dataset --dataset cifar10 --model resnet32 --num-gpus 1
-'''
+```
+
 * Training VGG11 on CIFAR100 with 2 GPU
-'''
+```
 python run-script.py --data-path /path/to/dataset --dataset cifar100 --model vgg11 --num-gpus 2
-'''
+```
+
 * Training ResNet50 on ImageNet with 4 GPU
-'''
+```
 python run-script.py --data-path /path/to/dataset --dataset imagenet --model resnet50 --num-gpus 4
-'''
+```
+
+* Training ResNet50 on ImageNet with 4 GPU and regularization penalty ratio of 0.3
+```
+python run-script.py --data-path /path/to/dataset --dataset imagenet --model resnet50 --num-gpus 4 --penalty-ratio 0.3
+```
