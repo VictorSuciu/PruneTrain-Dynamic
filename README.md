@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 # About PruneTrain
 
 This repository contains the source codes and scripts for training a set of CNNs using PruneTrian, continuous structured model pruning and network architecture reconfiguration for faster neural network training (https://arxiv.org/pdf/1901.09290.pdf). We provide the code base to train ResNet and VGG models with different number of layers for CIFAR10, CIFAR100, and ResNet50 model for ImageNet.
