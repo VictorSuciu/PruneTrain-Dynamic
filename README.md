@@ -10,10 +10,10 @@ We also provide the pruned models and network architecture file.
 
 | Dataset        | Model           | Removed training FLOPs | Removed inference FLOPs  | Top1 error (fine-tuning) | Model | Network |
 |----------------|:---------------:|:----------------------:|:------------------------:|:------------:|:-----:|:--------------------:|
-| CIFAR10        | ResNet32        | 53%                    |   66%                    | 91.8%        |[Model](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar10_resnet32.tar) | [Architecture](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar10_resnet32.py)|
-| CIFAR10        | ResNet50        | 50%                    |   70%                    | 93.1%        |[Model](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar10_resnet50.tar) | [Architecture](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar10_resnet50.py)|
-| CIFAR100       | ResNet32        | 32%                    |   46%                    | 69.5%        |[Model](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar100_resnet32.tar) | [Architecture](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar100_resnet32.py)|
-| CIFAR100       | ResNet50        | 53%                    |   69%                    | 72.4%        |[Model](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar100_resnet50.tar) | [Architecture](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar100_resnet50.py)|
+| CIFAR10        | ResNet32        | 53%                    |   66%                    | 91.8%        |[Link](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar10_resnet32.tar) | [Link](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar10_resnet32.py)|
+| CIFAR10        | ResNet50        | 50%                    |   70%                    | 93.1%        |[Link](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar10_resnet50.tar) | [Link](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar10_resnet50.py)|
+| CIFAR100       | ResNet32        | 32%                    |   46%                    | 69.5%        |[Link](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar100_resnet32.tar) | [Link](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar100_resnet32.py)|
+| CIFAR100       | ResNet50        | 53%                    |   69%                    | 72.4%        |[Link](https://bitbucket.org/lph_tools/prunetrain/downloads/model_cifar100_resnet50.tar) | [Link](https://bitbucket.org/lph_tools/prunetrain/downloads/arch_cifar100_resnet50.py)|
 | ImageNet       | ResNet50        | 37%                    |   53%                    | 74.4% (74.6%)|       |                      |
 | ImageNet       | ResNet50        | 29%                    |   43%                    | 74.7% (75.2%)|       |                      |
 
