@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://bitbucket.org/lph_tools/prunetrain/src/4ff58b6bf968fb4b6aedef17fca3fa6916d22078/LICENSE.md?at=master&fileviewer=file-view-default)
 
 # About PruneTrain
 
