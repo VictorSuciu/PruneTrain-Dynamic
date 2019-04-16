@@ -3,13 +3,12 @@ Flattened VGG8 for CIFAR
 """
 
 import torch.nn as nn
-from .. import CustomModule
 import math
 
 __all__ = ['vgg8_bn_flat']
 
 #class VGG8(nn.Module):
-class VGG8(CustomModule):
+class VGG8(nn.Module):
 
     # This should be redefined by the channel count
     def __init__(self, num_classes=10):
