@@ -527,8 +527,6 @@ def _genDenseModel(model, dense_chs, optimizer, arch, dataset):
     
     # Remove model parameters
     for rm_lyr in rm_lyrs:
-      print("4==========================")
-      print("del_param_in_flat_arch" in dir(model))
       model.del_param_in_flat_arch(rm_lyr)
 
     idxs, rm_params = [], []
