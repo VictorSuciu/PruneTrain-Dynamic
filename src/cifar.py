@@ -34,13 +34,10 @@ import torchvision.datasets as datasets
 import models.cifar as models
 
 from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
-#from custom.checkpoint_utils import _makeSparse, _genDenseModel, CustomDataParallel
 from custom import _makeSparse, _genDenseModel, _DataParallel
 from custom import get_group_lasso_global, get_group_lasso_group
 from custom_arch import *
 import numpy as np
-
-from models import CustomModule
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")

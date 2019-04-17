@@ -7,7 +7,6 @@ import math
 
 __all__ = ['vgg8_bn_flat']
 
-#class VGG8(nn.Module):
 class VGG8(nn.Module):
 
     # This should be redefined by the channel count
