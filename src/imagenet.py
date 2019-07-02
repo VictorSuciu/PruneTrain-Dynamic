@@ -327,7 +327,6 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
 
         # lasso penalty
         init_batch = batch_idx == 0 and epoch == 1
-        lasso_time_start = time.time()
 
         if args.en_group_lasso:
             if args.global_coeff:
@@ -356,7 +355,6 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
             lasso_penalty = 0.
 
         # Group lasso calcution is not performance-optimized => Ignore from execution time
-        lasso_time = time.time() - lasso_time_start
         loss += lasso_penalty
 
         # measure accuracy and record loss
@@ -372,7 +370,7 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
         optimizer.step()
 
         # measure elapsed time
-        batch_time.update(time.time() - end - lasso_time - data_load_time)
+        batch_time.update(time.time() - end - data_load_time)
         end = time.time()
         
         if batch_idx % args.print_freq == 0:
