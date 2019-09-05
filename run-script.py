@@ -29,6 +29,12 @@ with open(os.path.join('configs/', cfg_file)) as f_config:
    if args.dataset.startswith('cifar'):
        cfg['base']['model_dir'].replace('cifar', args.dataset)
 
+cfg['base']['learning-rate'] = cfg['base']['learning-rate'] *args.num_gpus
+cfg['base']['train_batch']   = int(cfg['base']['train_batch']*args.num_gpus)
+if args.dataset == 'imagenet':
+    cfg['base']['learning-rate'] /= 4
+    cfg['base']['train_batch']   /= 4
+
 if not os.path.exists(cfg['base']['model_dir']):
     os.makedirs(cfg['base']['model_dir'])
 
@@ -36,8 +42,6 @@ if not os.path.exists(cfg['base']['model_dir']):
 gpu_id = '0'
 for i in range(1,args.num_gpus):
     gpu_id +=','+str(i)
-cfg['base']['learning-rate'] = cfg['base']['learning-rate'] *args.num_gpus/4
-cfg['base']['train_batch']   = int(cfg['base']['train_batch']*args.num_gpus/4)
 
 # Reconfigured network file naming and directory to store
 arch_name = cfg['base']['arch']+'_'+cfg['base']['description']
