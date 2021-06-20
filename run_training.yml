@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://azuremlsdk2.blob.core.windows.net/latest/commandJob.schema.json
+experiment_name: dynamic-reconfig-test
+
+command: python run-script.py --data-path PLACEHOLDER --dataset cifar10 --model vgg11 --num-gpus 1
+code:
+  local_path: .
+environment: azureml:test_env_dh:2
+compute:
+  target: azureml:AComputeCluster1

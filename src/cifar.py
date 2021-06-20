@@ -21,7 +21,6 @@ import argparse
 import os
 import shutil
 import time
-import random
 
 import torch
 import torch.nn as nn
@@ -208,12 +207,19 @@ def main():
         print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
         return
 
+    
+    train_cost_base, bn_cost_base, inf_cost_base, out_act_base, out_chs_base, model_size_base = calc_cost.getTrainingCost(model, args.arch, base=True)
+    print('FLOP REPORT:', train_cost_base, bn_cost_base, inf_cost_base, out_act_base, out_chs_base, model_size_base)
+
     # Train and val
     for epoch in range(start_epoch, args.epochs+1):
         adjust_learning_rate(optimizer, epoch)
 
         print('\nEpoch: [%d | %d] LR: %f' % (epoch, args.epochs, state['lr']))
-
+        for name, param in model.named_parameters():
+            if 'conv' in name:
+                print(name, list(param.data.shape))
+        
         train_loss, train_acc, lasso_ratio, train_epoch_time = train(trainloader, model, criterion, optimizer, epoch, use_cuda)
         test_loss, test_acc, test_epoch_time = test(testloader, model, criterion, epoch, use_cuda)
 
@@ -269,6 +275,8 @@ def main():
 
     print('Best acc:')
     print(best_acc)
+
+    
 
 
 def train(trainloader, model, criterion, optimizer, epoch, use_cuda):

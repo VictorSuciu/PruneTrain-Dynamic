@@ -1,6 +1,7 @@
 import os
 import yaml
 import argparse
+import datetime
 
 # Argument parsing
 parser = argparse.ArgumentParser()
@@ -47,6 +48,8 @@ for i in range(1,args.num_gpus):
 arch_name = cfg['base']['arch']+'_'+cfg['base']['description']
 arch_out_dir = os.path.join(cfg['base']['model_dir'], 'arch', cfg['base']['description'])
 
+start_time = datetime.datetime.now()
+
 # Build command line
 # Iterate reconfiguration intervals
 for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
@@ -72,7 +75,7 @@ for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
     cmd_line += ' --en_group_lasso '        if cfg['pt']['en_group_lasso'] else ''
     cmd_line += ' --arch_out_dir1 '         +cfg['base']['arch_dir']
     cmd_line += ' --arch_out_dir2 '         +arch_out_dir if cfg['pt']['reconf_arch'] else ''
-    cmd_line += ' >> '                      +os.path.join(cfg['base']['model_dir'], cfg['base']['description'])+'.log'
+    # cmd_line += ' >> '                      +os.path.join(cfg['base']['model_dir'], cfg['base']['description'])+'.log'
 
     print (cmd_line)
     os.system(cmd_line)
@@ -80,3 +83,10 @@ for cur_epoch in range(0, cfg['base']['epochs'], cfg['pt']['sparse_interval']):
     # Checkpoint to resume
     checkpoint = 'checkpoint.pth.tar'
     cfg['base']['resume'] = os.path.join(cfg['base']['model_dir'], cfg['base']['description'], 'checkpoint.pth.tar')
+
+end_time = datetime.datetime.now()
+total_time = end_time - start_time
+
+print()
+print('Total time:')
+print(total_time.total_seconds())

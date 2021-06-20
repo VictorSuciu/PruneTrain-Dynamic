@@ -6,12 +6,12 @@ base:
     description: '0.2'
     train_batch: 128
     test_batch: 100
-    epochs: 182
+    epochs: 180
     learning-rate: 0.1
     schedule: '91 136'
     resume: ''
     arch: vgg11_bn_flat
-    save_checkpoint: 10
+    save_checkpoint: 30
     is_gating: False
 # PruneTrain configuration
 pt: 
