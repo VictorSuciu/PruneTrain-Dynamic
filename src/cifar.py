@@ -31,6 +31,7 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import models.cifar as models
+import scripts.calc_cost as calc_cost
 
 from utils import Logger, AverageMeter, accuracy, mkdir_p, savefig
 from custom import _makeSparse, _genDenseModel, _DataParallel
